@@ -83,4 +83,21 @@ Conflict: Employee already assigned to a shift on this date
 
 ## Problems Faced & Solved
 
-<!-- Add notes here about the main issues you faced while building StaffRota and how you solved them. -->
+**Problem 1: Docker port conflict blocking the new container**
+When starting the StaffRota stack, requests to `localhost:8000` were silently routing to a previously running container from a different project (the Serverless Support Bot), which was already bound to that port. The new backend container appeared to start successfully but returned unexpected responses.
+
+**Solution:** Identified the conflicting container in Docker Desktop, stopped it explicitly before rebuilding, and confirmed the correct service was responding by checking the `/health` endpoint response format. This reinforced the importance of always verifying which service owns a port before debugging application logic.
+
+---
+
+**Problem 2: Frontend not reaching the backend API across containers**
+The React frontend running in its own container was unable to reach `http://localhost:8000` because `localhost` inside a container refers to that container itself, not the host machine.
+
+**Solution:** Configured the Vite dev server proxy in `vite.config.js` to forward `/api` requests to the backend service using Docker Compose's internal DNS (`http://backend:8000`). This taught me a key lesson about Docker networking — containers communicate by service name, not by localhost.
+
+---
+
+**Problem 3: CSV export filename not prompting a download in the browser**
+The CSV export endpoint returned the correct data but the browser rendered it as plain text rather than triggering a file download.
+
+**Solution:** Added the `Content-Disposition: attachment; filename=rota-export.csv` header to the FastAPI response, which signals to the browser that the response should be saved as a file rather than displayed inline.
