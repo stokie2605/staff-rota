@@ -93,7 +93,7 @@ When starting the StaffRota stack, requests to `localhost:8000` were silently ro
 **Problem 2: Frontend not reaching the backend API across containers**
 The React frontend running in its own container was unable to reach `http://localhost:8000` because `localhost` inside a container refers to that container itself, not the host machine.
 
-**Solution:** Configured the Vite dev server proxy in `vite.config.js` to forward `/api` requests to the backend service using Docker Compose's internal DNS (`http://backend:8000`). This taught me a key lesson about Docker networking — containers communicate by service name, not by localhost.
+**Solution:** Kept the frontend API configuration simple for local portfolio review by calling `http://localhost:8000` directly from the browser, while using Docker Compose to run the backend and frontend as separate networked services. This kept the setup straightforward without requiring an nginx reverse proxy or complex container-to-container routing for a local development environment.
 
 ---
 
