@@ -1,16 +1,17 @@
-import os
-from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel, Session, create_engine
+from sqlalchemy.pool import StaticPool
 from database import get_session
 from main import app
 from models import Employee, Shift, ShiftAssignment
 
-# Setup test database file
-TEST_DB_FILE = "./test_staffrota.db"
-sqlite_url = f"sqlite:///{TEST_DB_FILE}"
-engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
+# Setup in-memory test database with StaticPool to share connection across threads/requests
+engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 
 def override_get_session():
     with Session(engine) as session:
@@ -20,24 +21,10 @@ app.dependency_overrides[get_session] = override_get_session
 
 @pytest.fixture(name="session", scope="function", autouse=True)
 def session_fixture():
-    # Cleanup any old test db files
-    if Path(TEST_DB_FILE).exists():
-        try:
-            os.remove(TEST_DB_FILE)
-        except OSError:
-            pass
-            
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
         yield session
     SQLModel.metadata.drop_all(engine)
-    
-    # Cleanup test db file
-    if Path(TEST_DB_FILE).exists():
-        try:
-            os.remove(TEST_DB_FILE)
-        except OSError:
-            pass
 
 @pytest.fixture(name="client")
 def client_fixture():
