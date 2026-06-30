@@ -127,3 +127,10 @@ The React frontend running in its own container was unable to reach `http://loca
 The CSV export endpoint returned the correct data but the browser rendered it as plain text rather than triggering a file download.
 
 **Solution:** Added the `Content-Disposition: attachment; filename=rota-export.csv` header to the FastAPI response, which signals to the browser that the response should be saved as a file rather than displayed inline.
+
+---
+
+**Problem 4: Application-only conflict checks were vulnerable to race conditions**
+The original shift assignment route checked for existing same-day assignments in Python before committing. Under concurrent requests, two requests could both pass that check before either committed, allowing a double-booking.
+
+**Solution:** Added database-level protection by storing `shift_date` and `shift_slot` on `ShiftAssignment`, enforcing a unique constraint on `employee_id + shift_date`, and catching `IntegrityError` to return a clean `409 Conflict`. This moves the critical invariant from best-effort application logic into the database transaction boundary.

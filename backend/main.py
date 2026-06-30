@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from database import create_db_and_tables, get_session
@@ -42,6 +43,10 @@ def week_bounds(value: str) -> tuple[date_type, date_type]:
     start = selected - timedelta(days=selected.weekday())
     end = start + timedelta(days=6)
     return start, end
+
+
+def shift_slot(shift: Shift) -> str:
+    return f"{shift.start_time}-{shift.end_time}"
 
 
 def assignment_detail(session: Session, assignment: ShiftAssignment) -> dict:
@@ -133,20 +138,21 @@ def create_assignment(assignment: ShiftAssignmentCreate, session: SessionDep) ->
     if not shift:
         raise HTTPException(status_code=404, detail="Shift not found")
 
-    existing_assignments = session.exec(
-        select(ShiftAssignment).where(ShiftAssignment.employee_id == assignment.employee_id)
-    ).all()
-    for existing in existing_assignments:
-        existing_shift = session.get(Shift, existing.shift_id)
-        if existing_shift and existing_shift.date == shift.date:
-            raise HTTPException(
-                status_code=400,
-                detail="Conflict: Employee already assigned to a shift on this date",
-            )
-
-    db_assignment = ShiftAssignment.model_validate(assignment)
+    db_assignment = ShiftAssignment(
+        employee_id=assignment.employee_id,
+        shift_id=assignment.shift_id,
+        shift_date=shift.date,
+        shift_slot=shift_slot(shift),
+    )
     session.add(db_assignment)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Conflict: Employee already assigned to a shift on this date",
+        ) from exc
     session.refresh(db_assignment)
     return assignment_detail(session, db_assignment)
 

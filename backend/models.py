@@ -1,5 +1,6 @@
 from typing import Optional
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
@@ -32,14 +33,16 @@ class ShiftCreate(ShiftBase):
     pass
 
 
-class ShiftAssignmentBase(SQLModel):
+class ShiftAssignmentCreate(SQLModel):
     employee_id: int = Field(foreign_key="employee.id")
     shift_id: int = Field(foreign_key="shift.id")
 
 
-class ShiftAssignment(ShiftAssignmentBase, table=True):
+class ShiftAssignment(ShiftAssignmentCreate, table=True):
+    __table_args__ = (
+        UniqueConstraint("employee_id", "shift_date", name="uix_employee_shift_date"),
+    )
+
     id: Optional[int] = Field(default=None, primary_key=True)
-
-
-class ShiftAssignmentCreate(ShiftAssignmentBase):
-    pass
+    shift_date: str = Field(index=True)
+    shift_slot: str

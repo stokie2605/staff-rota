@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import SQLModel, Session, create_engine, select
 from sqlalchemy.pool import StaticPool
 from database import get_session
 from main import app
@@ -81,12 +81,12 @@ def test_create_shift_and_conflict(client):
     })
     assert assign1_response.status_code == 200
 
-    # 4. Attempt to create second assignment on the same day (conflict!)
+    # 4. Attempt to create second assignment on the same day (database-enforced conflict!)
     assign2_response = client.post("/assignments", json={
         "employee_id": emp_id,
         "shift_id": shift2_id
     })
-    assert assign2_response.status_code == 400
+    assert assign2_response.status_code == 409
     assert "Conflict" in assign2_response.json()["detail"]
 
 def test_export_rota_csv(client):
@@ -114,3 +114,27 @@ def test_export_rota_csv(client):
     content = response.text
     assert "HQ Desk" in content
     assert "Bob" in content
+
+
+def test_assignment_persists_shift_date_and_slot(client, session):
+    employee_response = client.post("/employees", json={
+        "name": "Charlie Jones",
+        "role": "Nurse",
+        "department": "Emergency"
+    })
+    emp_id = employee_response.json()["id"]
+
+    shift_response = client.post("/shifts", json={
+        "date": "2026-07-02",
+        "start_time": "07:00",
+        "end_time": "15:00",
+        "location": "Ward C"
+    })
+    shift_id = shift_response.json()["id"]
+
+    response = client.post("/assignments", json={"employee_id": emp_id, "shift_id": shift_id})
+    assert response.status_code == 200
+
+    assignment = session.exec(select(ShiftAssignment)).one()
+    assert assignment.shift_date == "2026-07-02"
+    assert assignment.shift_slot == "07:00-15:00"
