@@ -81,6 +81,30 @@ When assigning an employee to a shift, the API checks whether that employee alre
 Conflict: Employee already assigned to a shift on this date
 ```
 
+## ✅ Automated Testing
+
+The project includes a `pytest` suite that verifies:
+- API health endpoints.
+- Employee creation CRUD operations.
+- Shift assignment same-day conflict detection logic.
+- Weekly CSV rota export formatting and content.
+
+To run the backend tests locally:
+1. Navigate to the `backend/` directory:
+   ```bash
+   cd backend
+   ```
+2. Install testing requirements:
+   ```bash
+   pip install -r requirements.txt -r requirements-dev.txt
+   ```
+3. Execute `pytest`:
+   ```bash
+   python -m pytest
+   ```
+
+A GitHub Actions CI workflow runs these tests automatically on every push to `main` and `master`.
+
 ## Problems Faced & Solved
 
 **Problem 1: Docker port conflict blocking the new container**
