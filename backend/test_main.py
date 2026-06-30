@@ -39,14 +39,17 @@ def session_fixture():
         except OSError:
             pass
 
-client = TestClient(app)
+@pytest.fixture(name="client")
+def client_fixture():
+    with TestClient(app) as test_client:
+        yield test_client
 
-def test_health():
+def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
-def test_create_employee():
+def test_create_employee(client):
     payload = {
         "name": "Jane Doe",
         "role": "Nurse",
@@ -58,7 +61,7 @@ def test_create_employee():
     assert data["name"] == "Jane Doe"
     assert data["id"] is not None
 
-def test_create_shift_and_conflict():
+def test_create_shift_and_conflict(client):
     # 1. Create employee
     employee_response = client.post("/employees", json={
         "name": "Alice Smith",
@@ -99,7 +102,7 @@ def test_create_shift_and_conflict():
     assert assign2_response.status_code == 400
     assert "Conflict" in assign2_response.json()["detail"]
 
-def test_export_rota_csv():
+def test_export_rota_csv(client):
     # Create employee & shift
     employee_response = client.post("/employees", json={"name": "Bob", "role": "Staff", "department": "HQ"})
     emp_id = employee_response.json()["id"]
