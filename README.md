@@ -1,5 +1,7 @@
 # StaffRota
 
+[![CI](https://github.com/stokie2605/staff-rota/actions/workflows/ci.yml/badge.svg)](https://github.com/stokie2605/staff-rota/actions/workflows/ci.yml)
+
 ![StaffRota Screenshot](screenshot.png)
 
 StaffRota is a full-stack shift and rota management web application for operational teams that need a clear weekly staffing view. It is designed around common scheduling use cases in NHS departments, warehouses, call centres, and support teams.
