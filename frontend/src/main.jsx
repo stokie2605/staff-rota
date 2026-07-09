@@ -8,12 +8,14 @@ import { EmployeePage } from "./components/EmployeePage";
 import { ShiftPage } from "./components/ShiftPage";
 import { AssignmentPage } from "./components/AssignmentPage";
 import { WeeklyRota } from "./components/WeeklyRota";
+import { AuditPage } from "./components/AuditPage";
 
 const views = {
   rota: "Weekly Rota",
   employees: "Employees",
   shifts: "Shifts",
-  assignments: "Assign Staff"
+  assignments: "Assign Staff",
+  audit: "Compliance Audit Logs"
 };
 
 function toInputDate(date) {
@@ -101,6 +103,7 @@ function App() {
             setNotice={setNotice}
           />
         )}
+        {activeView === "audit" && <AuditPage />}
       </main>
     </div>
   );

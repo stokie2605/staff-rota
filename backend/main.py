@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from database import create_db_and_tables, get_session
-from models import Employee, EmployeeCreate, Shift, ShiftAssignment, ShiftAssignmentCreate, ShiftCreate
+from models import AuditLog, Employee, EmployeeCreate, Shift, ShiftAssignment, ShiftAssignmentCreate, ShiftCreate
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
@@ -93,10 +93,26 @@ def delete_employee(employee_id: int, session: SessionDep) -> dict[str, str]:
     employee = session.get(Employee, employee_id)
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
+    
+    # Save the details for our log before the employee is deleted from the DB
+    employee_name = employee.name
+    employee_role = employee.role
+    
     assignments = session.exec(select(ShiftAssignment).where(ShiftAssignment.employee_id == employee_id)).all()
     for assignment in assignments:
         session.delete(assignment)
+        
     session.delete(employee)
+
+    # Insert the new operational log entry
+    audit_log = AuditLog(
+        action="EMPLOYEE_DELETED",
+        performed_by="Admin",
+        details=f"Deleted employee {employee_name} ({employee_role}) and removed all associated shift assignments."
+    )
+    session.add(audit_log)
+    
+    # Save all database changes together
     session.commit()
     return {"status": "deleted"}
 
@@ -168,9 +184,30 @@ def delete_assignment(assignment_id: int, session: SessionDep) -> dict[str, str]
     assignment = session.get(ShiftAssignment, assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
+        
+    # Gather clear context for the audit log before removing records
+    employee = session.get(Employee, assignment.employee_id)
+    shift = session.get(Shift, assignment.shift_id)
+    
+    emp_name = employee.name if employee else "Unknown Employee"
+    shift_info = f"{shift.date} ({shift.start_time}-{shift.end_time})" if shift else "Unknown Shift"
+
     session.delete(assignment)
+
+    # Log the action
+    audit_log = AuditLog(
+        action="ASSIGNMENT_DELETED",
+        performed_by="Admin",
+        details=f"Removed {emp_name} from their scheduled shift on {shift_info}."
+    )
+    session.add(audit_log)
     session.commit()
     return {"status": "deleted"}
+
+
+@app.get("/audit-logs", response_model=list[AuditLog])
+def list_audit_logs(session: SessionDep) -> list[AuditLog]:
+    return list(session.exec(select(AuditLog).order_by(AuditLog.timestamp.desc())).all())
 
 
 @app.get("/rota/week")
@@ -237,7 +274,7 @@ def export_rota(date: str, session: SessionDep) -> StreamingResponse:
                             employee["name"],
                             employee["role"],
                             employee["department"],
-                        ]
+                            ]
                     )
             else:
                 writer.writerow(

@@ -1,8 +1,6 @@
+from datetime import datetime
 from typing import Optional
-
-from sqlalchemy import UniqueConstraint
-from sqlmodel import Field, SQLModel
-
+from sqlmodel import Field, SQLModel, UniqueConstraint
 
 class EmployeeBase(SQLModel):
     name: str
@@ -46,3 +44,12 @@ class ShiftAssignment(ShiftAssignmentCreate, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     shift_date: str = Field(index=True)
     shift_slot: str
+
+class AuditLog(SQLModel, table=True):
+    __tablename__ = "audit_logs"
+
+    id: int | None = Field(default=None, primary_key=True, index=True)
+    timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    action: str          # e.g., "SHIFT_CREATED", "ASSIGNMENT_DELETED"
+    performed_by: str = Field(default="System")  # Tracks who made the change
+    details: str         # Plain text description of what altered
