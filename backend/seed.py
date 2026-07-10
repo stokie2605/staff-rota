@@ -1,3 +1,4 @@
+import logging
 from datetime import date, timedelta
 
 from sqlmodel import Session, delete
@@ -53,8 +54,9 @@ def run_seed() -> None:
         )
         session.commit()
 
-    print("Seed data created successfully.")
+    logging.info("Seed data created successfully.")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     run_seed()
