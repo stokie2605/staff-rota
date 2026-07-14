@@ -10,9 +10,9 @@
 
 ## 🎥 Visual Preview
 
-| Weekly Rota View | Staff Directory |
-|---|---|
-| <img src="main%20profile%20page.png" width="450" alt="Main UI"> | <img src="screenshot.png" width="450" alt="Rota Overview"> |
+<div align="center">
+  <img src="screenshot.png" width="750" alt="Staff Rota App Preview" />
+</div>
 
 ---
 
