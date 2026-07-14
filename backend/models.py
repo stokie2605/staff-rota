@@ -1,4 +1,6 @@
+from datetime import date as date_type
 from datetime import datetime
+from datetime import time as time_type
 from typing import Optional
 from sqlmodel import Field, SQLModel, UniqueConstraint
 
@@ -17,9 +19,9 @@ class EmployeeCreate(EmployeeBase):
 
 
 class ShiftBase(SQLModel):
-    date: str
-    start_time: str
-    end_time: str
+    date: date_type
+    start_time: time_type
+    end_time: time_type
     location: str
 
 
@@ -42,7 +44,7 @@ class ShiftAssignment(ShiftAssignmentCreate, table=True):
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    shift_date: str = Field(index=True)
+    shift_date: date_type = Field(index=True)
     shift_slot: str
 
 class AuditLog(SQLModel, table=True):

@@ -31,7 +31,13 @@ def on_startup() -> None:
     create_db_and_tables()
 
 
-def parse_date(value: str) -> date_type:
+from datetime import date as date_type
+from datetime import time as time_type
+
+
+def parse_date(value: str | date_type) -> date_type:
+    if isinstance(value, date_type):
+        return value
     try:
         return datetime.strptime(value, "%Y-%m-%d").date()
     except ValueError as exc:
@@ -46,12 +52,24 @@ def week_bounds(value: str) -> tuple[date_type, date_type]:
 
 
 def shift_slot(shift: Shift) -> str:
-    return f"{shift.start_time}-{shift.end_time}"
+    start = shift.start_time.strftime("%H:%M") if hasattr(shift.start_time, "strftime") else str(shift.start_time)
+    end = shift.end_time.strftime("%H:%M") if hasattr(shift.end_time, "strftime") else str(shift.end_time)
+    return f"{start}-{end}"
 
 
 def assignment_detail(session: Session, assignment: ShiftAssignment) -> dict:
     employee = session.get(Employee, assignment.employee_id)
     shift = session.get(Shift, assignment.shift_id)
+    
+    shift_date_str = ""
+    start_time_str = ""
+    end_time_str = ""
+    
+    if shift:
+        shift_date_str = shift.date.isoformat() if hasattr(shift.date, "isoformat") else str(shift.date)
+        start_time_str = shift.start_time.strftime("%H:%M") if hasattr(shift.start_time, "strftime") else str(shift.start_time)
+        end_time_str = shift.end_time.strftime("%H:%M") if hasattr(shift.end_time, "strftime") else str(shift.end_time)
+
     return {
         "id": assignment.id,
         "employee_id": assignment.employee_id,
@@ -61,9 +79,9 @@ def assignment_detail(session: Session, assignment: ShiftAssignment) -> dict:
         "department": employee.department if employee else "",
         "shift": {
             "id": shift.id if shift else None,
-            "date": shift.date if shift else "",
-            "start_time": shift.start_time if shift else "",
-            "end_time": shift.end_time if shift else "",
+            "date": shift_date_str,
+            "start_time": start_time_str,
+            "end_time": end_time_str,
             "location": shift.location if shift else "",
         },
     }
@@ -190,7 +208,10 @@ def delete_assignment(assignment_id: int, session: SessionDep) -> dict[str, str]
     shift = session.get(Shift, assignment.shift_id)
     
     emp_name = employee.name if employee else "Unknown Employee"
-    shift_info = f"{shift.date} ({shift.start_time}-{shift.end_time})" if shift else "Unknown Shift"
+    shift_date_str = shift.date.isoformat() if shift and hasattr(shift.date, "isoformat") else (shift.date if shift else "")
+    start_time_str = shift.start_time.strftime("%H:%M") if shift and hasattr(shift.start_time, "strftime") else (shift.start_time if shift else "")
+    end_time_str = shift.end_time.strftime("%H:%M") if shift and hasattr(shift.end_time, "strftime") else (shift.end_time if shift else "")
+    shift_info = f"{shift_date_str} ({start_time_str}-{end_time_str})" if shift else "Unknown Shift"
 
     session.delete(assignment)
 
@@ -222,7 +243,7 @@ def weekly_rota(date: str, session: SessionDep) -> dict:
         current_text = current.isoformat()
         day_shifts = []
         for shift in shifts:
-            if shift.date != current_text:
+            if shift.date != current:
                 continue
             staff = []
             for assignment in assignments:
@@ -241,9 +262,9 @@ def weekly_rota(date: str, session: SessionDep) -> dict:
             day_shifts.append(
                 {
                     "id": shift.id,
-                    "date": shift.date,
-                    "start_time": shift.start_time,
-                    "end_time": shift.end_time,
+                    "date": shift.date.isoformat() if hasattr(shift.date, "isoformat") else str(shift.date),
+                    "start_time": shift.start_time.strftime("%H:%M") if hasattr(shift.start_time, "strftime") else str(shift.start_time),
+                    "end_time": shift.end_time.strftime("%H:%M") if hasattr(shift.end_time, "strftime") else str(shift.end_time),
                     "location": shift.location,
                     "staff": staff,
                 }

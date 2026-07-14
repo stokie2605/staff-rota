@@ -136,5 +136,5 @@ def test_assignment_persists_shift_date_and_slot(client, session):
     assert response.status_code == 200
 
     assignment = session.exec(select(ShiftAssignment)).one()
-    assert assignment.shift_date == "2026-07-02"
+    assert str(assignment.shift_date) == "2026-07-02"
     assert assignment.shift_slot == "07:00-15:00"

@@ -1,5 +1,5 @@
 import logging
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 from sqlmodel import Session, delete
 
@@ -7,10 +7,10 @@ from database import create_db_and_tables, engine
 from models import Employee, Shift, ShiftAssignment
 
 
-def this_week_dates() -> list[str]:
+def this_week_dates() -> list[date]:
     today = date.today()
     monday = today - timedelta(days=today.weekday())
-    return [(monday + timedelta(days=offset)).isoformat() for offset in range(5)]
+    return [monday + timedelta(days=offset) for offset in range(5)]
 
 
 def run_seed() -> None:
@@ -25,11 +25,11 @@ def run_seed() -> None:
         Employee(name="Priya Patel", role="Care Coordinator", department="Scheduling"),
     ]
     shifts = [
-        Shift(date=dates[0], start_time="08:00", end_time="16:00", location="Ward A"),
-        Shift(date=dates[1], start_time="09:00", end_time="17:00", location="Warehouse North"),
-        Shift(date=dates[2], start_time="10:00", end_time="18:00", location="Call Centre"),
-        Shift(date=dates[3], start_time="07:00", end_time="15:00", location="Operations Hub"),
-        Shift(date=dates[4], start_time="12:00", end_time="20:00", location="Ward B"),
+        Shift(date=dates[0], start_time=time(8, 0), end_time=time(16, 0), location="Ward A"),
+        Shift(date=dates[1], start_time=time(9, 0), end_time=time(17, 0), location="Warehouse North"),
+        Shift(date=dates[2], start_time=time(10, 0), end_time=time(18, 0), location="Call Centre"),
+        Shift(date=dates[3], start_time=time(7, 0), end_time=time(15, 0), location="Operations Hub"),
+        Shift(date=dates[4], start_time=time(12, 0), end_time=time(20, 0), location="Ward B"),
     ]
 
     with Session(engine) as session:
@@ -47,9 +47,24 @@ def run_seed() -> None:
 
         session.add_all(
             [
-                ShiftAssignment(employee_id=employees[0].id, shift_id=shifts[0].id),
-                ShiftAssignment(employee_id=employees[1].id, shift_id=shifts[1].id),
-                ShiftAssignment(employee_id=employees[2].id, shift_id=shifts[2].id),
+                ShiftAssignment(
+                    employee_id=employees[0].id,
+                    shift_id=shifts[0].id,
+                    shift_date=shifts[0].date,
+                    shift_slot=f"{shifts[0].start_time.strftime('%H:%M')}-{shifts[0].end_time.strftime('%H:%M')}"
+                ),
+                ShiftAssignment(
+                    employee_id=employees[1].id,
+                    shift_id=shifts[1].id,
+                    shift_date=shifts[1].date,
+                    shift_slot=f"{shifts[1].start_time.strftime('%H:%M')}-{shifts[1].end_time.strftime('%H:%M')}"
+                ),
+                ShiftAssignment(
+                    employee_id=employees[2].id,
+                    shift_id=shifts[2].id,
+                    shift_date=shifts[2].date,
+                    shift_slot=f"{shifts[2].start_time.strftime('%H:%M')}-{shifts[2].end_time.strftime('%H:%M')}"
+                ),
             ]
         )
         session.commit()
@@ -58,5 +73,6 @@ def run_seed() -> None:
 
 
 if __name__ == "__main__":
+    import logging
     logging.basicConfig(level=logging.INFO)
     run_seed()
