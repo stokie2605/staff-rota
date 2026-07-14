@@ -1,5 +1,5 @@
 # Staff Rota — Shift Scheduling & Operations Platform
-> **The 1-Line Mission:** Full-stack Docker-containerized staff scheduling system enforcing shift conflict prevention, compliance audit trails, and one-click CSV rota exports for teams.
+> **The 1-Line Mission:** Backend-driven Docker-containerized staff scheduling system enforcing shift conflict prevention, compliance audit trails, and one-click CSV rota exports for teams.
 
 ### ⚡ Engineering Breakdown
 * **The Problem:** Managing staff shift assignments across departments manually produces scheduling conflicts, missing compliance records, and time-consuming rota distribution — especially for 24/7 teams like hospital wards, call centres, and logistics warehouses.
