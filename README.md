@@ -1,14 +1,6 @@
-# Staff Rota — Shift Scheduling & Operations Platform
-> **The 1-Line Mission:** Backend-driven Docker-containerized staff scheduling system enforcing shift conflict prevention, compliance audit trails, and one-click CSV rota exports for teams.
+# Operational Resource Scheduling & Compliance Engine
 
-### ⚡ Engineering Breakdown
-* **The Problem:** Managing staff shift assignments across departments manually produces scheduling conflicts, missing compliance records, and time-consuming rota distribution — especially for 24/7 teams like hospital wards, call centres, and logistics warehouses.
-* **The Solution:** A FastAPI/SQLModel REST backend enforcing database-level double-booking prevention via a `UNIQUE (employee_id, shift_date)` constraint, backed by a React SPA frontend with a 7-day rota grid, real-time sidebar stats, and CSV export logic — all containerized with Docker Compose for one-command local deployment.
-* **The Tech Stack:** `FastAPI` `SQLModel` `SQLite` `React` `Vite` `Docker Compose` `pytest`
-
----
-
-## 🎥 Visual Preview
+A containerized administrative utility designed to manage personnel coverage schedules, enforce strict shift-allocation constraints, and export audit-ready shift compliance data.
 
 <div align="center">
   <img src="screenshot.png" width="750" alt="Staff Rota App Preview" />
@@ -16,9 +8,23 @@
 
 ---
 
+## Operational Focus
+* **The Problem:** Manual schedule allocation is highly susceptible to staffing conflicts, regulatory compliance violations, and fragmented operational records.
+* **The Solution:** A lightweight back-office scheduling core that validates roster data against organizational constraints (maximum working hours, skill requirements) in real time.
+
+---
+
+## Core Capabilities
+* **Constraint Validation Engine:** Programmatically blocks scheduling conflicts, shift overlaps, and double-booking errors.
+* **CSV Compliance Auditing:** Generates machine-readable, audit-compliant data exports mapping operational coverage hours for payroll and regulatory checks.
+* **Dockerized Administration:** Fully containerized architecture ensuring rapid, consistent deployment across any local server or virtualization platform.
+* **Role-Based Access Readiness:** Backed by structured API validation schemas to guarantee scheduling updates can only be executed by authorized system roles.
+
+---
+
 ## 🏗️ System Architecture
 
-```
+```text
 Docker Compose
      │
      ├── backend (python:3.12-slim)
@@ -84,7 +90,7 @@ All destructive admin actions (`EMPLOYEE_DELETED`, `ASSIGNMENT_DELETED`) are log
 
 ## 🗄️ Data Models
 
-```
+```text
 Employee       id, name, role, department
 Shift          id, date, start_time, end_time, location
 ShiftAssignment id, employee_id (FK), shift_id (FK), shift_date, shift_slot
@@ -116,9 +122,10 @@ python seed.py
 ```
 Populates 5 employees, 5 shifts across the current week, and 3 pre-made assignments.
 
+---
 
-### Recent Project Cleanups & Upgrades
-* **Project Organization:** Cleaned up project folders by separating backend logic, frontend code, and testing suites.
-* **Security Fixes:** Swapped out weak authentication methods for secure hashing and tokens to protect user data.
-* **Database Tuning:** Reorganized database tables and data types to make queries run faster and handle dates/times properly.
-* **Code Cleanup:** Removed dead code, optimized slow loops, and set up strict linting rules to keep the codebase easy to read.
+## Recent Architectural Upgrades
+* **Operational Restructuring:** Standardized repository file hierarchies by separating core automation logic, helper scripts, and test files.
+* **Security Hardening:** Swapped legacy credential configs for environment variables and secure token validation policies.
+* **Database Schema Upgrades:** Refactored primitive database types into native data structures for robust ORM and transaction handling.
+* **Systems Maintenance:** Eradicated legacy diagnostic scripts, optimized loops, and established static analysis scanning to ensure code hygiene.
