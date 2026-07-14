@@ -12,7 +12,7 @@
 
 | Weekly Rota View | Staff Directory |
 |---|---|
-| ![Main UI](main%20profile%20page.png) | ![Rota Overview](screenshot.png) |
+| <img src="main%20profile%20page.png" width="450" alt="Main UI"> | <img src="screenshot.png" width="450" alt="Rota Overview"> |
 
 ---
 
