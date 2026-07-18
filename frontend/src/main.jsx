@@ -38,6 +38,7 @@ function App() {
   const [assignments, setAssignments] = useState([]);
   const [rota, setRota] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   const stats = useMemo(() => {
@@ -55,6 +56,7 @@ function App() {
 
   async function refreshAll() {
     setLoading(true);
+    setError("");
     try {
       const [employeeData, shiftData, assignmentData, rotaData] = await Promise.all([
         api.getEmployees(),
@@ -66,6 +68,9 @@ function App() {
       setShifts(shiftData);
       setAssignments(assignmentData);
       setRota(rotaData);
+    } catch (err) {
+      setError("Failed to load roster data. The backend server may be waking up from cold start.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -86,19 +91,33 @@ function App() {
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
       <main className="main-content">
         <PageHeader title={title} notice={notice} setNotice={setNotice} />
+        
         {activeView === "rota" && (
-          <WeeklyRota
-            rota={rota}
-            selectedDate={selectedDate}
-            loading={loading}
-            onPrevious={() => setSelectedDate(addDays(selectedDate, -7))}
-            onNext={() => setSelectedDate(addDays(selectedDate, 7))}
-            onToday={() => setSelectedDate(toInputDate(new Date()))}
-            onExport={handleExport}
-            refresh={refreshAll}
-            stats={stats}
-          />
+          error ? (
+            <div className="panel" style={{ textAlign: "center", padding: "40px", maxWidth: "500px", margin: "40px auto" }}>
+              <h3 style={{ color: "#ef4444", marginBottom: "10px" }}>⚠️ Connection Notice</h3>
+              <p style={{ color: "#94a3b8", fontSize: "0.95rem", marginBottom: "20px", lineHeight: "1.5" }}>
+                {error}
+              </p>
+              <button className="primary-button" onClick={refreshAll}>
+                Retry Connection
+              </button>
+            </div>
+          ) : (
+            <WeeklyRota
+              rota={rota}
+              selectedDate={selectedDate}
+              loading={loading}
+              onPrevious={() => setSelectedDate(addDays(selectedDate, -7))}
+              onNext={() => setSelectedDate(addDays(selectedDate, 7))}
+              onToday={() => setSelectedDate(toInputDate(new Date()))}
+              onExport={handleExport}
+              refresh={refreshAll}
+              stats={stats}
+            />
+          )
         )}
+
         {activeView === "employees" && (
           <EmployeePage employees={employees} refresh={refreshAll} setNotice={setNotice} />
         )}
