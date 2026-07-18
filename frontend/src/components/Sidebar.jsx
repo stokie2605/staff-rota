@@ -17,7 +17,9 @@ export function Sidebar({ activeView, setActiveView }) {
           <p>Shift planning console</p>
         </div>
       </div>
-      <nav className="nav-list" style={{ flexGrow: 1 }}>
+      
+      {/* Sidebar nav buttons menu - natural height spacing */}
+      <nav className="nav-list">
         {items.map((item) => (
           <button
             key={item.id}
@@ -28,7 +30,11 @@ export function Sidebar({ activeView, setActiveView }) {
           </button>
         ))}
       </nav>
-      <div className="settings-footer" style={{ borderTop: "1px solid #1e293b", paddingTop: "15px" }}>
+      
+      {/* Spacer that pushes settings cleanly to the bottom without stretching the grid */}
+      <div style={{ flexGrow: 1 }} />
+      
+      <div className="settings-footer" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "15px" }}>
         <button 
           className="nav-item" 
           style={{ width: "100%", opacity: 0.7 }}

@@ -274,6 +274,29 @@ select:focus {
   gap: 24px;
 }
 
+.rota-grid {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scroll-behavior: smooth;
+}
+
+.rota-grid::-webkit-scrollbar {
+  height: 6px;
+}
+.rota-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 999px;
+}
+.rota-grid::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.25);
+  border-radius: 999px;
+}
+.rota-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.45);
+}
+
 .week-toolbar {
   background: var(--card-bg);
   backdrop-filter: var(--glass-blur);
@@ -341,6 +364,8 @@ select:focus {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   min-height: 520px;
+  flex: 0 0 215px;
+  width: 215px;
   overflow: hidden;
   box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.4);
 }
@@ -623,10 +648,6 @@ tr:hover td {
     border-right: none;
     border-bottom: 1px solid var(--border-color);
   }
-  
-  .rota-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -637,17 +658,9 @@ tr:hover td {
   .panel-grid {
     grid-template-columns: 1fr;
   }
-  
-  .rota-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 @media (max-width: 480px) {
-  .rota-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .kpi-grid {
     grid-template-columns: 1fr;
   }
