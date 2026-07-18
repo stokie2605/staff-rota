@@ -113,6 +113,17 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/rota/seed")
+def trigger_seed() -> dict:
+    from seed import run_seed
+    try:
+        run_seed()
+        return {"status": "success", "message": "NHS compliance seed data created successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 @app.post("/employees", response_model=Employee)
 def create_employee(employee: EmployeeCreate, session: SessionDep) -> Employee:
     db_employee = Employee.model_validate(employee)
