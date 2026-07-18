@@ -40,6 +40,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [role, setRole] = useState("admin"); // 'admin' or 'staff'
 
   const stats = useMemo(() => {
     const unfilledShifts = shifts.filter(s => !assignments.some(a => a.shift_id === s.id));
@@ -80,6 +81,13 @@ function App() {
     refreshAll();
   }, [selectedDate]);
 
+  // If role is changed to staff, force activeView back to rota
+  useEffect(() => {
+    if (role === "staff") {
+      setActiveView("rota");
+    }
+  }, [role]);
+
   async function handleExport() {
     await downloadRotaCsv(selectedDate);
   }
@@ -88,7 +96,12 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar activeView={activeView} setActiveView={setActiveView} />
+      <Sidebar 
+        activeView={activeView} 
+        setActiveView={setActiveView} 
+        role={role} 
+        setRole={setRole} 
+      />
       <main className="main-content">
         <PageHeader title={title} notice={notice} setNotice={setNotice} />
         
@@ -114,15 +127,18 @@ function App() {
               onExport={handleExport}
               refresh={refreshAll}
               stats={stats}
+              role={role}
             />
           )
         )}
 
-        {activeView === "employees" && (
+        {activeView === "employees" && role === "admin" && (
           <EmployeePage employees={employees} refresh={refreshAll} setNotice={setNotice} />
         )}
-        {activeView === "shifts" && <ShiftPage shifts={shifts} refresh={refreshAll} setNotice={setNotice} />}
-        {activeView === "assignments" && (
+        {activeView === "shifts" && role === "admin" && (
+          <ShiftPage shifts={shifts} refresh={refreshAll} setNotice={setNotice} />
+        )}
+        {activeView === "assignments" && role === "admin" && (
           <AssignmentPage
             employees={employees}
             shifts={shifts}
@@ -131,14 +147,14 @@ function App() {
             setNotice={setNotice}
           />
         )}
-        {activeView === "swaps" && (
+        {activeView === "swaps" && role === "admin" && (
           <SwapPage
             employees={employees}
             refresh={refreshAll}
             setNotice={setNotice}
           />
         )}
-        {activeView === "audit" && <AuditPage />}
+        {activeView === "audit" && role === "admin" && <AuditPage />}
       </main>
     </div>
   );

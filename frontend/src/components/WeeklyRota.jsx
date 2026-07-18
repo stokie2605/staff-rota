@@ -15,7 +15,7 @@ function getDeptClass(location) {
   return "dept-" + location.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
-export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, onToday, onExport, refresh, stats }) {
+export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, onToday, onExport, refresh, stats, role }) {
   
   async function toggleLocum(shiftId) {
     try {
@@ -42,6 +42,8 @@ export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, on
   if (loading || !rota) {
     return <div className="panel loading-panel">Loading rota...</div>;
   }
+
+  const isAdmin = role === "admin";
 
   return (
     <section className="rota-section">
@@ -94,23 +96,25 @@ export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, on
                             </div>
                           )}
                           
-                          {/* Toggle locum pool page button */}
-                          <button 
-                            className="locum-toggle-btn" 
-                            onClick={() => toggleLocum(shift.id)}
-                            style={{
-                              width: "100%",
-                              padding: "4px 8px",
-                              fontSize: "0.7rem",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "6px",
-                              cursor: "pointer",
-                              fontWeight: "600",
-                              backgroundColor: shift.offered_to_locum_pool ? "#f1f5f9" : "#ffffff"
-                            }}
-                          >
-                            {shift.offered_to_locum_pool ? "Cancel Locum Offer" : "Offer to Locum"}
-                          </button>
+                          {/* Toggle locum pool page button - Admin Only */}
+                          {isAdmin && (
+                            <button 
+                              className="locum-toggle-btn" 
+                              onClick={() => toggleLocum(shift.id)}
+                              style={{
+                                width: "100%",
+                                padding: "4px 8px",
+                                fontSize: "0.7rem",
+                                border: "1px solid #e2e8f0",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontWeight: "600",
+                                backgroundColor: shift.offered_to_locum_pool ? "#f1f5f9" : "#ffffff"
+                              }}
+                            >
+                              {shift.offered_to_locum_pool ? "Cancel Locum Offer" : "Offer to Locum"}
+                            </button>
+                          )}
                         </div>
                       )}
                       
@@ -138,7 +142,8 @@ export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, on
                               textAlign: "left"
                             }}
                           >
-                            {person.name.replace(/^(dr\.|sister|nurse)\s+/i, "")}
+                            {person.name.replace(/^(dr\.|sister\nurse)\s+/i, "")}
+                            {/* Small Status dot indicator */}
                             <span 
                               className={`status-dot ${person.is_locum ? "locum" : "permanent"}`}
                               style={{ marginLeft: "5px", display: "inline-block", verticalAlign: "middle" }}
@@ -146,22 +151,24 @@ export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, on
                             />
                           </span>
                           
-                          {/* Shift swap request trigger */}
-                          <button 
-                            className="swap-request-btn"
-                            onClick={() => requestSwap(person.employee_id, shift.id)}
-                            title="Post swap request for this staff"
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: "0.8rem",
-                              padding: "0 2px",
-                              flexShrink: 0
-                            }}
-                          >
-                            🔄
-                          </button>
+                          {/* Shift swap request trigger - Admin Only */}
+                          {isAdmin && (
+                            <button 
+                              className="swap-request-btn"
+                              onClick={() => requestSwap(person.employee_id, shift.id)}
+                              title="Post swap request for this staff"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                fontSize: "0.8rem",
+                                padding: "0 2px",
+                                flexShrink: 0
+                              }}
+                            >
+                              🔄
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>

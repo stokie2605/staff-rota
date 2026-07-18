@@ -7,7 +7,10 @@ const items = [
   { id: "audit", label: "Audit Logs" }
 ];
 
-export function Sidebar({ activeView, setActiveView }) {
+export function Sidebar({ activeView, setActiveView, role, setRole }) {
+  // If user role is staff, restrict visibility to the Weekly Rota view only
+  const visibleItems = role === "staff" ? items.filter(i => i.id === "rota") : items;
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -17,10 +20,32 @@ export function Sidebar({ activeView, setActiveView }) {
           <p>Shift planning console</p>
         </div>
       </div>
+
+      {/* Role Switcher Selector */}
+      <div className="role-switcher" style={{ paddingBottom: "10px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <label style={{ display: "block", fontSize: "0.68rem", fontWeight: "600", color: "#64748b", textTransform: "uppercase", marginBottom: "6px" }}>
+          Access Console
+        </label>
+        <select 
+          value={role} 
+          onChange={(e) => setRole(e.target.value)}
+          style={{ 
+            background: "rgba(15, 23, 42, 0.4)", 
+            color: "#f8fafc", 
+            borderColor: "rgba(255,255,255,0.08)", 
+            fontSize: "0.85rem",
+            padding: "6px 8px",
+            cursor: "pointer"
+          }}
+        >
+          <option value="admin" style={{ background: "#0f172a" }}>🔒 Rota Manager (Admin)</option>
+          <option value="staff" style={{ background: "#0f172a" }}>👁️ Clinical Staff (Read-Only)</option>
+        </select>
+      </div>
       
-      {/* Sidebar nav buttons menu - natural height spacing */}
+      {/* Sidebar nav buttons menu */}
       <nav className="nav-list">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <button
             key={item.id}
             className={activeView === item.id ? "nav-item active" : "nav-item"}
@@ -31,7 +56,7 @@ export function Sidebar({ activeView, setActiveView }) {
         ))}
       </nav>
       
-      {/* Spacer that pushes settings cleanly to the bottom without stretching the grid */}
+      {/* Spacer that pushes settings cleanly to the bottom */}
       <div style={{ flexGrow: 1 }} />
       
       <div className="settings-footer" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "15px" }}>
