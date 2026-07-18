@@ -128,22 +128,20 @@ export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, on
                           <span 
                             style={{
                               flexGrow: 1,
+                              minWidth: 0, /* Flexbox shrink/truncation constraint */
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
                               fontSize: "0.8rem",
                               fontWeight: "500",
                               color: "#334155",
-                              textAlign: "left",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px"
+                              textAlign: "left"
                             }}
                           >
                             {person.name.replace(/^(dr\.|sister|nurse)\s+/i, "")}
-                            {/* Small Status dot indicator */}
                             <span 
                               className={`status-dot ${person.is_locum ? "locum" : "permanent"}`}
+                              style={{ marginLeft: "5px", display: "inline-block", verticalAlign: "middle" }}
                               title={person.is_locum ? "Locum Staff" : "Permanent Staff"}
                             />
                           </span>
