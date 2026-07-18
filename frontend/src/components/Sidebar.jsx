@@ -7,7 +7,7 @@ const items = [
   { id: "audit", label: "Audit Logs" }
 ];
 
-export function Sidebar({ activeView, setActiveView, stats }) {
+export function Sidebar({ activeView, setActiveView }) {
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -17,7 +17,7 @@ export function Sidebar({ activeView, setActiveView, stats }) {
           <p>Shift planning console</p>
         </div>
       </div>
-      <nav className="nav-list">
+      <nav className="nav-list" style={{ flexGrow: 1 }}>
         {items.map((item) => (
           <button
             key={item.id}
@@ -28,13 +28,14 @@ export function Sidebar({ activeView, setActiveView, stats }) {
           </button>
         ))}
       </nav>
-      <div className="sidebar-stats">
-        {stats.map((stat) => (
-          <div key={stat.label}>
-            <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
-          </div>
-        ))}
+      <div className="settings-footer" style={{ borderTop: "1px solid #1e293b", paddingTop: "15px" }}>
+        <button 
+          className="nav-item" 
+          style={{ width: "100%", opacity: 0.7 }}
+          onClick={() => alert("Settings panel configuration coming soon!")}
+        >
+          ⚙️ Settings
+        </button>
       </div>
     </aside>
   );

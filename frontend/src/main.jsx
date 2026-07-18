@@ -83,7 +83,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar activeView={activeView} setActiveView={setActiveView} stats={stats} />
+      <Sidebar activeView={activeView} setActiveView={setActiveView} />
       <main className="main-content">
         <PageHeader title={title} notice={notice} setNotice={setNotice} />
         {activeView === "rota" && (
@@ -96,6 +96,7 @@ function App() {
             onToday={() => setSelectedDate(toInputDate(new Date()))}
             onExport={handleExport}
             refresh={refreshAll}
+            stats={stats}
           />
         )}
         {activeView === "employees" && (
