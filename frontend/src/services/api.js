@@ -11,6 +11,12 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: "Request failed" }));
+    if (typeof error.detail === "object") {
+      const err = new Error(error.detail.message || "Request failed");
+      err.type = error.detail.type;
+      err.detail = error.detail;
+      throw err;
+    }
     throw new Error(error.detail || "Request failed");
   }
 
@@ -28,9 +34,16 @@ export const api = {
   getShifts: () => request("/shifts"),
   createShift: (shift) => request("/shifts", { method: "POST", body: JSON.stringify(shift) }),
   deleteShift: (id) => request(`/shifts/${id}`, { method: "DELETE" }),
+  toggleLocumPool: (id) => request(`/shifts/${id}/locum-pool`, { method: "POST" }),
   getAssignments: () => request("/assignments"),
   createAssignment: (assignment) => request("/assignments", { method: "POST", body: JSON.stringify(assignment) }),
-  deleteAssignment: (id) => request(`/assignments/${id}`, { method: "DELETE" }),
+  deleteAssignment: (id, reasonCode = "ROSTER_ADJUSTMENT") => request(`/assignments/${id}?reason_code=${reasonCode}`, { method: "DELETE" }),
+  
+  // Swap endpoints
+  getSwapRequests: () => request("/assignments/swap-requests"),
+  createSwapRequest: (req) => request("/assignments/swap-request", { method: "POST", body: JSON.stringify(req) }),
+  approveSwapRequest: (id, approval) => request(`/assignments/swap-request/${id}/approve`, { method: "POST", body: JSON.stringify(approval) }),
+  
   getWeek: (date) => request(`/rota/week?date=${date}`)
 };
 

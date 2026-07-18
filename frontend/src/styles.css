@@ -417,3 +417,78 @@ th {
     grid-template-columns: 1fr;
   }
 }
+
+/* NHS Roster Enhancements styling rules */
+.grade-pill {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.locum-tag {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+  font-size: 0.65rem !important;
+  padding: 1px 5px !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+  border: 1px solid #fde68a !important;
+  margin-left: 5px !important;
+}
+
+.warning-button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-weight: 800;
+  background: #dc3545;
+  color: #ffffff;
+}
+
+.warning-button:hover {
+  background: #bd2130;
+}
+
+.override-panel label {
+  color: #856404;
+  margin-bottom: 4px;
+}
+
+.override-panel input, .override-panel select {
+  border: 1px solid #ffeeba;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #172033;
+}
+
+.locum-toggle-btn:hover {
+  background: #e2e6ea !important;
+  border-color: #adb5bd !important;
+}
+
+/* NHS Department Colors */
+.dept-ae {
+  background: #ffe4e6 !important;
+  color: #9f1239 !important;
+}
+
+.dept-pediatrics {
+  background: #fae8ff !important;
+  color: #86198f !important;
+}
+
+.dept-ward-3 {
+  background: #e0f2fe !important;
+  color: #075985 !important;
+}
+
+.dept-icu {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.dept-agency-pool {
+  background: #fef9c3 !important;
+  color: #854d0e !important;
+}
+

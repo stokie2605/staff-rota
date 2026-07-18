@@ -3,7 +3,8 @@ const items = [
   { id: "employees", label: "Employees" },
   { id: "shifts", label: "Shifts" },
   { id: "assignments", label: "Assign Staff" },
-  { id: "audit", label: "Audit Logs" } // Added administrative view key
+  { id: "swaps", label: "Shift Swaps" },
+  { id: "audit", label: "Audit Logs" }
 ];
 
 export function Sidebar({ activeView, setActiveView, stats }) {

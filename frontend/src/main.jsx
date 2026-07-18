@@ -8,6 +8,7 @@ import { EmployeePage } from "./components/EmployeePage";
 import { ShiftPage } from "./components/ShiftPage";
 import { AssignmentPage } from "./components/AssignmentPage";
 import { WeeklyRota } from "./components/WeeklyRota";
+import { SwapPage } from "./components/SwapPage";
 import { AuditPage } from "./components/AuditPage";
 
 const views = {
@@ -15,6 +16,7 @@ const views = {
   employees: "Employees",
   shifts: "Shifts",
   assignments: "Assign Staff",
+  swaps: "Shift Swap Board",
   audit: "Compliance Audit Logs"
 };
 
@@ -39,12 +41,17 @@ function App() {
   const [notice, setNotice] = useState("");
 
   const stats = useMemo(() => {
+    const unfilledShifts = shifts.filter(s => !assignments.some(a => a.shift_id === s.id));
+    const locumOffers = shifts.filter(s => s.offered_to_locum_pool && !assignments.some(a => a.shift_id === s.id));
+    const locumStaff = employees.filter(e => e.is_locum);
+
     return [
       { label: "Employees", value: employees.length },
-      { label: "Shifts", value: shifts.length },
-      { label: "Assignments", value: assignments.length }
+      { label: "Locum Pool", value: locumStaff.length },
+      { label: "Unfilled Wards", value: unfilledShifts.length },
+      { label: "Locum Offers", value: locumOffers.length }
     ];
-  }, [employees.length, shifts.length, assignments.length]);
+  }, [employees, shifts, assignments]);
 
   async function refreshAll() {
     setLoading(true);
@@ -88,6 +95,7 @@ function App() {
             onNext={() => setSelectedDate(addDays(selectedDate, 7))}
             onToday={() => setSelectedDate(toInputDate(new Date()))}
             onExport={handleExport}
+            refresh={refreshAll}
           />
         )}
         {activeView === "employees" && (
@@ -99,6 +107,13 @@ function App() {
             employees={employees}
             shifts={shifts}
             assignments={assignments}
+            refresh={refreshAll}
+            setNotice={setNotice}
+          />
+        )}
+        {activeView === "swaps" && (
+          <SwapPage
+            employees={employees}
             refresh={refreshAll}
             setNotice={setNotice}
           />

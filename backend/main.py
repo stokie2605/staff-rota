@@ -182,6 +182,18 @@ def delete_shift(shift_id: int, session: SessionDep) -> dict[str, str]:
     return {"status": "deleted"}
 
 
+@app.post("/shifts/{shift_id}/locum-pool")
+def toggle_locum_pool(shift_id: int, session: SessionDep) -> dict:
+    shift = session.get(Shift, shift_id)
+    if not shift:
+        raise HTTPException(status_code=404, detail="Shift not found")
+    shift.offered_to_locum_pool = not shift.offered_to_locum_pool
+    session.add(shift)
+    session.commit()
+    return {"status": "success", "offered_to_locum_pool": shift.offered_to_locum_pool}
+
+
+
 @app.post("/assignments")
 def create_assignment(assignment: AssignmentRequest, session: SessionDep) -> dict:
     employee = session.get(Employee, assignment.employee_id)

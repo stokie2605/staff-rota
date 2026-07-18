@@ -59,8 +59,9 @@ export function AuditPage() {
           <tr style={{ textAlign: "left", borderBottom: "2px solid #e2e8f0" }}>
             <th style={{ padding: "12px" }}>Timestamp</th>
             <th style={{ padding: "12px" }}>Action</th>
+            <th style={{ padding: "12px" }}>Reason Code</th>
             <th style={{ padding: "12px" }}>Performed By</th>
-            <th style={{ padding: "12px" }}>Details</th>
+            <th style={{ padding: "12px" }}>Details / Justification</th>
           </tr>
         </thead>
         <tbody>
@@ -70,12 +71,35 @@ export function AuditPage() {
                 {formatTimestamp(log.timestamp)}
               </td>
               <td style={{ padding: "12px" }}>
-                <span style={{ backgroundColor: "#fee2e2", color: "#991b1b", padding: "4px 8px", borderRadius: "6px", fontSize: "0.8rem", fontWeight: "600" }}>
+                <span style={{ 
+                  backgroundColor: log.action === "EMERGENCY_OVERRIDE" ? "#fef3c7" : "#fee2e2", 
+                  color: log.action === "EMERGENCY_OVERRIDE" ? "#d97706" : "#991b1b", 
+                  padding: "4px 8px", 
+                  borderRadius: "6px", 
+                  fontSize: "0.8rem", 
+                  fontWeight: "600" 
+                }}>
                   {log.action}
                 </span>
               </td>
+              <td style={{ padding: "12px" }}>
+                {log.reason_code ? (
+                  <span className="pill" style={{ fontSize: "0.75rem", backgroundColor: "#e2e3e5", color: "#383d41", padding: "2px 8px" }}>
+                    {log.reason_code}
+                  </span>
+                ) : (
+                  <span style={{ color: "#aaa" }}>-</span>
+                )}
+              </td>
               <td style={{ padding: "12px", fontWeight: "600" }}>{log.performed_by}</td>
-              <td style={{ padding: "12px" }}>{log.details}</td>
+              <td style={{ padding: "12px", fontSize: "0.95rem" }}>
+                <div>{log.details}</div>
+                {log.override_justification && (
+                  <div style={{ fontStyle: "italic", fontSize: "0.85rem", color: "#b45309", marginTop: "4px" }}>
+                    💡 Justification: "{log.override_justification}"
+                  </div>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
