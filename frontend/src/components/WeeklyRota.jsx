@@ -100,28 +100,43 @@ export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, on
                     
                     {shift.staff.map((person) => (
                       <div 
-                        className={`staff-chip ${departmentClass(person.department)}`} 
                         key={person.assignment_id}
                         style={{
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
                           marginBottom: "4px",
-                          width: "100%"
+                          width: "100%",
+                          gap: "4px"
                         }}
                       >
-                        <span style={{ display: "flex", alignItems: "center", gap: "5px", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                        <span 
+                          className={`staff-chip ${departmentClass(person.department)}`}
+                          style={{
+                            flexGrow: 1,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            display: "inline-block",
+                            textAlign: "left",
+                            paddingRight: "6px"
+                          }}
+                          title={`${person.name}${person.is_locum ? " (Locum)" : ""}`}
+                        >
                           {person.name}
                           {person.is_locum && (
                             <span 
                               className="locum-tag" 
                               style={{
-                                fontSize: "0.6rem",
+                                fontSize: "0.55rem",
                                 backgroundColor: "#ffc107",
                                 color: "#212529",
-                                padding: "1px 4px",
+                                padding: "1px 3px",
                                 borderRadius: "3px",
-                                fontWeight: "700"
+                                fontWeight: "700",
+                                marginLeft: "4px",
+                                display: "inline-block",
+                                verticalAlign: "middle"
                               }}
                             >
                               LOCUM
@@ -139,7 +154,8 @@ export function WeeklyRota({ rota, selectedDate, loading, onPrevious, onNext, on
                             border: "none",
                             cursor: "pointer",
                             fontSize: "0.85rem",
-                            padding: "0 2px"
+                            padding: "0 2px",
+                            flexShrink: 0
                           }}
                         >
                           🔄
