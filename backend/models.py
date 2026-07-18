@@ -8,6 +8,8 @@ class EmployeeBase(SQLModel):
     name: str
     role: str
     department: str
+    grade: str                   # NHS Grades: 'Band 5 Nurse', 'Band 6 Nurse', 'Junior Doctor', 'Registrar', 'Consultant'
+    is_locum: bool = False       # Flag to identify temporary contract/agency staff
 
 
 class Employee(EmployeeBase, table=True):
@@ -23,6 +25,8 @@ class ShiftBase(SQLModel):
     start_time: time_type
     end_time: time_type
     location: str
+    required_grade: str          # Roster slot grade requirement (matches Employee.grade)
+    offered_to_locum_pool: bool = False  # Set to True to page locum agency staff
 
 
 class Shift(ShiftBase, table=True):
@@ -47,11 +51,25 @@ class ShiftAssignment(ShiftAssignmentCreate, table=True):
     shift_date: date_type = Field(index=True)
     shift_slot: str
 
+
+class ShiftSwapRequest(SQLModel, table=True):
+    __tablename__ = "shift_swap_requests"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    requesting_employee_id: int = Field(foreign_key="employee.id")
+    shift_id: int = Field(foreign_key="shift.id")
+    target_employee_id: Optional[int] = Field(default=None, foreign_key="employee.id") # Optional target peer
+    status: str = Field(default="PENDING")  # PENDING, APPROVED, DECLINED, SWAPPED
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+
 class AuditLog(SQLModel, table=True):
     __tablename__ = "audit_logs"
 
     id: int | None = Field(default=None, primary_key=True, index=True)
     timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    action: str          # e.g., "SHIFT_CREATED", "ASSIGNMENT_DELETED"
-    performed_by: str = Field(default="System")  # Tracks who made the change
-    details: str         # Plain text description of what altered
+    action: str                        # e.g., "SHIFT_CREATED", "ASSIGNMENT_DELETED", "EMERGENCY_OVERRIDE"
+    performed_by: str = Field(default="System")
+    details: str                       # Description of changes
+    reason_code: Optional[str] = None  # e.g., "SICKNESS", "LEAVE_COVER", "EMERGENCY_OVERRIDE"
+    override_justification: Optional[str] = None  # 1-sentence manager justification for EWTD warnings
