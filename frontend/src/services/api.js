@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "https://staff-rota-backend-o36l.onrender.com";
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
@@ -44,7 +44,8 @@ export const api = {
   createSwapRequest: (req) => request("/assignments/swap-request", { method: "POST", body: JSON.stringify(req) }),
   approveSwapRequest: (id, approval) => request(`/assignments/swap-request/${id}/approve`, { method: "POST", body: JSON.stringify(approval) }),
   
-  getWeek: (date) => request(`/rota/week?date=${date}`)
+  getWeek: (date) => request(`/rota/week?date=${date}`),
+  getAuditLogs: () => request("/audit-logs")
 };
 
 export async function downloadRotaCsv(date) {

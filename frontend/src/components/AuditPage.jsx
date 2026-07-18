@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { api } from "../services/api";
 
 function formatTimestamp(timestamp) {
   if (!timestamp) return "-";
@@ -16,9 +17,7 @@ export function AuditPage() {
 
     async function loadAuditLogs() {
       try {
-        const response = await fetch("http://localhost:8000/audit-logs");
-        if (!response.ok) throw new Error("Unable to load audit logs");
-        const data = await response.json();
+        const data = await api.getAuditLogs();
         if (isMounted) {
           setLogs(Array.isArray(data) ? data : []);
           setError("");
