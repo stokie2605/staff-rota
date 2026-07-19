@@ -1,71 +1,77 @@
-const items = [
-  { id: "rota", label: "Weekly Rota" },
-  { id: "employees", label: "Employees" },
-  { id: "shifts", label: "Shifts" },
-  { id: "assignments", label: "Assign Staff" },
-  { id: "swaps", label: "Shift Swaps" },
-  { id: "audit", label: "Audit Logs" }
+const NAV_ITEMS = [
+  { id: "dashboard",   label: "Dashboard",   icon: "⊞",  adminOnly: false },
+  { id: "roster",      label: "Roster",      icon: "📅", adminOnly: false },
+  { id: "staff",       label: "Staff",       icon: "👤", adminOnly: true  },
+  { id: "assignments", label: "Assign Staff",icon: "📋", adminOnly: true  },
+  { id: "swaps",       label: "Shift Swaps", icon: "🔄", adminOnly: true  },
+  { id: "locations",   label: "Locations",   icon: "📍", adminOnly: false },
+  { id: "reports",     label: "Reports",     icon: "📊", adminOnly: true  },
+  { id: "audit",       label: "Audit Logs",  icon: "🗂️", adminOnly: true  },
 ];
 
 export function Sidebar({ activeView, setActiveView, role, setRole }) {
-  // If user role is staff, restrict visibility to the Weekly Rota view only
-  const visibleItems = role === "staff" ? items.filter(i => i.id === "rota") : items;
+  const isAdmin = role === "admin";
+  const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <aside className="sidebar">
-      <div className="brand">
-        <div className="brand-mark">SR</div>
+      {/* Org Header */}
+      <div className="sidebar-org">
+        <div className="sidebar-org-icon">+</div>
         <div>
-          <h1>StaffRota</h1>
-          <p>Shift planning console</p>
+          <div className="sidebar-org-name">City General</div>
+          <div className="sidebar-org-sub">Clinical Ops</div>
         </div>
       </div>
 
-      {/* Role Switcher Selector */}
-      <div className="role-switcher" style={{ paddingBottom: "10px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <label style={{ display: "block", fontSize: "0.68rem", fontWeight: "600", color: "#64748b", textTransform: "uppercase", marginBottom: "6px" }}>
-          Access Console
-        </label>
-        <select 
-          value={role} 
+      {/* Role switcher */}
+      <div className="sidebar-role-switcher">
+        <span className="sidebar-role-label">Access Console</span>
+        <select
+          className="sidebar-role-select"
+          value={role}
           onChange={(e) => setRole(e.target.value)}
-          style={{ 
-            background: "rgba(15, 23, 42, 0.4)", 
-            color: "#f8fafc", 
-            borderColor: "rgba(255,255,255,0.08)", 
-            fontSize: "0.85rem",
-            padding: "6px 8px",
-            cursor: "pointer"
-          }}
         >
-          <option value="admin" style={{ background: "#0f172a" }}>🔒 Rota Manager (Admin)</option>
-          <option value="staff" style={{ background: "#0f172a" }}>👁️ Clinical Staff (Read-Only)</option>
+          <option value="admin">🔒 Rota Manager</option>
+          <option value="staff">👁️ Clinical Staff</option>
         </select>
       </div>
-      
-      {/* Sidebar nav buttons menu */}
-      <nav className="nav-list">
+
+      {/* Nav */}
+      <nav className="sidebar-nav">
         {visibleItems.map((item) => (
           <button
             key={item.id}
-            className={activeView === item.id ? "nav-item active" : "nav-item"}
+            className={`nav-item ${activeView === item.id ? "active" : ""}`}
             onClick={() => setActiveView(item.id)}
           >
-            {item.label}
+            <span className="nav-icon">{item.icon}</span>
+            <span>{item.label}</span>
           </button>
         ))}
       </nav>
-      
-      {/* Spacer that pushes settings cleanly to the bottom */}
-      <div style={{ flexGrow: 1 }} />
-      
-      <div className="settings-footer" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "15px" }}>
-        <button 
-          className="nav-item" 
-          style={{ width: "100%", opacity: 0.7 }}
-          onClick={() => alert("Settings panel configuration coming soon!")}
+
+      <div className="sidebar-spacer" />
+
+      {/* New Shift CTA — admin only */}
+      {isAdmin && (
+        <button
+          className="sidebar-new-shift"
+          onClick={() => setActiveView("shifts")}
         >
-          ⚙️ Settings
+          + New Shift
+        </button>
+      )}
+
+      {/* Footer */}
+      <div className="sidebar-footer">
+        <button className="nav-item" onClick={() => alert("Settings coming soon")}>
+          <span className="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </button>
+        <button className="nav-item" onClick={() => alert("Logged out")}>
+          <span className="nav-icon">↩️</span>
+          <span>Logout</span>
         </button>
       </div>
     </aside>
