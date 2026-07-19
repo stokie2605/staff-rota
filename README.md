@@ -1,48 +1,53 @@
-# StaffRota — NHS Shift Planning & Compliance Console
+# RotaCare — Universal SaaS Scheduling Platform
 
-A full-stack, NHS-grade staff scheduling application with a real-time compliance rules engine, locum pool management, shift swap board, and a comprehensive audit trail.
+A high-end, multi-tenant workforce scheduling application designed for modern clinical and private practices (Dental Clinics, Physiotherapy, Care Homes). RotaCare combines an advanced shift timeline with a dynamic semantic terminology engine, role-based portals, and an automated working-time compliance auditor.
 
 **Live Demo:** [https://staff-rota-frontend.onrender.com](https://staff-rota-frontend.onrender.com)
 
 ---
 
 <div align="center">
-  <img src="docs/screenshot.jpg" width="900" alt="StaffRota NHS Compliance Dashboard — Glassmorphism Dark Mode" />
+  <img src="docs/rota week.png" width="900" alt="RotaCare Dashboard — Manager Gantt View" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);" />
 </div>
 
 ---
 
-## 🏥 Overview
+## ✨ Overview
 
-Built to handle NHS-level complexity. The scheduling engine enforces the **European Working Time Directive (EWTD)** automatically — catching 11-hour rest violations, 48-hour weekly hour caps, and clinical grade mismatches in real time before any shift assignment is saved.
+RotaCare isn't just a spreadsheet replacement; it's a dynamic scheduling OS. Rather than forcing independent businesses into rigid hospital terminology, the system adapts directly to the client's industry via a **Universal Context Engine**. 
 
-- **Role-Based Access:** A role switcher allows Clinical Staff to view the rota read-only, while Rota Managers have full access to assign, override, and audit.
-- **Glassmorphism UI:** A premium dark-mode interface built with frosted-glass panels, neon cyan accents, and Montserrat typography.
+- **Role-Based Portals:** Managers get a powerful, collapsible command center. Practitioners get a clean, mobile-first personal agenda.
+- **Dynamic Semantic Layout:** The entire application repaints its terminology instantly based on the active Industry Template (e.g., swapping "Locations" and "Staff" for "Chairs" and "Dentists").
+- **Compliance Rules Engine:** Enforces 11-hour rest rules, 48-hour week caps, and grade-matching before any shift is published.
 - **Live Deployed:** Backend (FastAPI + SQLite) on Render. Frontend (React + Vite) on Render Static Sites.
 
 ---
 
-## ✅ Core Features
+## 🚀 Core Features
 
-### NHS Compliance Rules Engine (`backend/compliance.py`)
-- **11-Hour Rest Rule:** Blocks consecutive shift assignments with less than 11 hours between end and start times (handles midnight-crossing shifts correctly).
-- **48-Hour Weekly Cap:** Audits a full Mon–Sun window and raises a warning if total assigned hours exceed 48.
-- **Grade Hierarchy Enforcement:** Prevents clinical grade mismatches — nurses cannot cover doctor shifts; junior doctors cannot cover consultant shifts.
-- **Override Justification:** Managers can bypass soft warnings with a mandatory reason code + 1-sentence justification, permanently logged to the audit trail.
+### 1. Dynamic Terminology Engine
+Built for multi-tenant scalability, the application dynamically updates all sidebar links, metric cards, and table headers based on the active **Industry Template**:
+- **Dental Clinic:** Staff → Practitioners, Locations → Chairs
+- **Care Home:** Staff → Carers, Locations → Units/Floors
+- **Physiotherapy:** Staff → Therapists, Locations → Treatment Rooms
 
-### Locum Pool Management
-- Unassigned shifts can be flagged **"Offer to Locum Pool"** with one click, broadcasting the shift to agency staff.
-- Locum staff are tagged with amber indicators on all rota views and employee directories.
-- Dashboard KPI cards track the live count of open locum offers and unfilled ward shifts.
+### 2. Dual Role-Based UX Architecture
+<div align="center">
+  <img src="docs/login.png" width="450" alt="RotaCare Secure Login Portal" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 20px 0;" />
+</div>
 
-### Shift Swap Board (`SwapPage.jsx`)
-- Staff can post shift swap requests directly from the rota.
-- Managers approve swaps on a dedicated board, with grade-filtered replacement staff dropdowns.
-- Swap approvals run through the full compliance engine — a warning override is required if the replacement would violate EWTD.
+- **Practice Manager Console:** A full-scale Gantt timeline. To prevent "spreadsheet fatigue," the grid features **Smart Accordions** that instantly collapse any location with zero active shifts into a clean single-line header.
+- **Practitioner Agenda Feed:** When a clinical staff member logs in, the heavy Gantt chart is bypassed entirely. They are presented with a beautiful, mobile-first vertical card feed showing exactly when and where they are working today.
 
-### Compliance Audit Logs
-- Every assignment, deletion, override, and swap is permanently logged.
-- Audit entries display the **action type**, **reason code** (e.g. `EMERGENCY_OVERRIDE`, `SICKNESS_COVER`), and the manager's **override justification string**.
+### 3. Real-Time Compliance Auditor
+Built to handle strict medical working time directives (like EWTD):
+- **11-Hour Rest Rule:** Blocks consecutive shifts with less than 11 hours of rest between them.
+- **Grade Hierarchy Enforcement:** Prevents junior staff from being assigned to shifts requiring senior consultant/lead grades.
+- **Audit Trails & Overrides:** Managers can bypass soft warnings using mandatory reason codes (`EMERGENCY_OVERRIDE`), permanently logged to a dedicated audit trail.
+
+### 4. Locum Pool & Swap Management
+- **One-Click Agency Broadcasts:** Unassigned shifts can be flagged to the Locum/Agency pool instantly.
+- **Shift Swap Board:** Staff can request shift swaps, and managers can approve them on a dedicated board (complete with compliance validation for the replacement staff).
 
 ---
 
@@ -54,12 +59,12 @@ Docker Compose
      ├── backend (python:3.12-slim)
      │     │  FastAPI + SQLModel + Uvicorn
      │     │  Port: 8000
-     │     ├── compliance.py   ← NHS EWTD rules engine
-     │     ├── seed.py         ← NHS demo data seeder
+     │     ├── compliance.py   ← Automated rules engine
+     │     ├── seed.py         ← Private Practice demo seeder
      │     └── SQLite DB (staffrota-data volume)
      │
      └── frontend (node:22-alpine)
-           │  React + Vite
+           │  React + Vite + Custom RotaContext
            └── Port: 3000
 ```
 
@@ -70,36 +75,17 @@ Docker Compose
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/health` | Service health check |
-| `GET` | `/rota/seed` | Seed NHS demo data via HTTP |
-| `POST` | `/employees` | Create employee |
-| `GET` | `/employees` | List all employees |
-| `DELETE` | `/employees/{id}` | Delete employee + cascade + audit log |
+| `GET` | `/rota/seed` | Seed Private Practice demo data |
+| `POST` | `/employees` | Create staff member |
+| `GET` | `/employees` | List all staff |
+| `DELETE` | `/employees/{id}` | Delete staff + cascade + audit log |
 | `POST` | `/shifts` | Create shift |
 | `GET` | `/shifts` | List all shifts |
 | `DELETE` | `/shifts/{id}` | Delete shift |
-| `POST` | `/shifts/{id}/locum-pool` | Toggle locum pool offer |
-| `POST` | `/assignments` | Assign employee (runs compliance check) |
-| `GET` | `/assignments` | List all assignments |
-| `DELETE` | `/assignments/{id}` | Remove assignment + audit log |
-| `GET` | `/assignments/swap-requests` | List pending swap requests |
-| `POST` | `/assignments/swap-request` | Post a swap request |
-| `POST` | `/assignments/swap-request/{id}/approve` | Approve a swap |
+| `POST` | `/assignments` | Assign staff (runs compliance check) |
 | `GET` | `/audit-logs` | All compliance audit entries |
 | `GET` | `/rota/week?date=` | 7-day structured rota view |
-| `GET` | `/rota/export?date=` | Download weekly CSV rota |
-
----
-
-## 🗄️ Data Models
-
-```text
-Employee          id, name, role, department, grade, is_locum
-Shift             id, date, start_time, end_time, location, required_grade, offered_to_locum_pool
-ShiftAssignment   id, employee_id (FK), shift_id (FK), shift_date, shift_slot
-                  UNIQUE CONSTRAINT (employee_id, shift_date)
-ShiftSwapRequest  id, requesting_employee_id, shift_id, target_employee_id, status
-AuditLog          id, timestamp, action, performed_by, details, reason_code, override_justification
-```
+| `GET` | `/rota/export?date=` | Download weekly CSV schedule |
 
 ---
 
@@ -111,7 +97,7 @@ cd staff-rota
 docker-compose up --build
 ```
 
-- **Frontend:** http://localhost:3000
+- **Frontend Secure Portal:** http://localhost:3000
 - **Backend API docs:** http://localhost:8000/docs
 
 ### Run Without Docker
@@ -136,34 +122,12 @@ cd backend
 pytest -vv
 ```
 
-**Test Results (11/11 passing):**
-- `test_check_11hr_rest_compliance` ✅
-- `test_check_48hr_weekly_compliance` ✅
-- `test_check_grade_compliance` ✅
-- `test_create_employee` ✅
-- `test_create_shift_and_conflict` ✅
-- `test_export_rota_csv` ✅
-- `test_assignment_grade_mismatch` ✅
-- `test_assignment_compliance_warning_and_override` ✅
-- `test_shift_swap_workflow` ✅
+**Test Results (11/11 passing):** Includes EWTD 11-hour rest validation, 48-hour caps, grade hierarchy enforcement, and swap board logic.
 
 ---
 
-## NHS Grade / Band Mapping
-
-| Category | Grades Supported |
-|---|---|
-| Nursing Staff | Band 5 Nurse (Staff Nurse), Band 6 Nurse (Senior/Sister) |
-| Medical Staff | Junior Doctor, Registrar, Consultant |
-| Agency / Locum | Any grade, flagged with amber indicator |
-
----
-
-## Recent Upgrades
-
-- **NHS EWTD Compliance Engine:** 11-hour rest, 48-hour weekly cap, and grade hierarchy validation.
-- **Locum Pool Management:** One-click locum broadcasts with live KPI tracking.
-- **Shift Swap Board:** Full swap request and approval workflow with compliance checks.
-- **Role-Based Access:** Clinical Staff (read-only) and Rota Manager (full control) modes.
-- **Glassmorphism Dashboard:** Complete dark-mode UI redesign with frosted glass panels, neon accents, and Montserrat typography.
-- **Live Deployment:** Fully deployed on Render — frontend static site + Dockerised backend.
+## Recent SaaS Upgrades
+- **Secure Login Portal:** Implemented isolated routing based on Practice Manager vs. Staff roles.
+- **Universal Context Terminology:** Added global `industryTemplate` state context to decouple UI language from static medical terms.
+- **Smart Accordion Dashboard:** Rebuilt the Gantt renderer to automatically collapse empty locations, radically reducing UI clutter.
+- **MySchedule Feed:** Introduced a mobile-first agenda view specifically designed for front-line practitioners.
