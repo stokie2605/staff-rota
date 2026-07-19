@@ -66,7 +66,7 @@ export function GanttRota({ role, searchQuery = "" }) {
     }
   }
 
-  if (loading || !rota) {
+  if (loading || !rota || !rota.days) {
     return (
       <div className="gantt-card">
         <div className="gantt-loading">Loading Live Rota Timeline...</div>
@@ -78,11 +78,11 @@ export function GanttRota({ role, searchQuery = "" }) {
 
   // Extract unique wards from all days
   const wards = [...new Set(
-    rota.days.flatMap(d => d.shifts.map(s => s.location))
+    (rota?.days || []).flatMap(d => (d.shifts || []).map(s => s.location))
   )].sort();
 
   // The day data for the selected date (24h view) or today
-  const activeDay = rota.days.find(d => d.date === selectedDate) || rota.days[0];
+  const activeDay = (rota?.days || []).find(d => d.date === selectedDate) || (rota?.days || [])[0];
 
   return (
     <div className="gantt-card">
@@ -244,9 +244,10 @@ function TwentyFourHourView({ activeDay, wards, isAdmin, refresh, searchQuery = 
 
 // ─── 3 Day View ────────────────────────────────────────────────────
 function ThreeDayView({ rota, selectedDate, wards, isAdmin, refresh }) {
-  const idx   = rota.days.findIndex(d => d.date === selectedDate);
+  const daysArray = rota?.days || [];
+  const idx   = daysArray.findIndex(d => d.date === selectedDate);
   const start = Math.max(0, idx);
-  const days  = rota.days.slice(start, start + 3);
+  const days  = daysArray.slice(start, start + 3);
 
   // Current time indicator
   const now = new Date();
@@ -332,9 +333,11 @@ function WeekView({ rota, selectedDate, isAdmin, refresh }) {
     catch (err) { alert("Could not update locum pool: " + err.message); }
   }
 
+  const daysArray = rota?.days || [];
+
   return (
     <div className="week-columns">
-      {rota.days.map(day => (
+      {daysArray.map(day => (
         <div
           key={day.date}
           className={`week-col ${day.date === selectedDate ? "week-col--today" : ""}`}
@@ -344,11 +347,11 @@ function WeekView({ rota, selectedDate, isAdmin, refresh }) {
             <span>{day.date.slice(5)}</span>
           </div>
           <div className="week-col-body">
-            {day.shifts.length === 0 && (
+            {(day.shifts || []).length === 0 && (
               <div className="gantt-empty">No shifts</div>
             )}
-            {day.shifts.map(shift => {
-              const isUnassigned = shift.staff.length === 0;
+            {(day.shifts || []).map(shift => {
+              const isUnassigned = (shift.staff || []).length === 0;
               return (
                 <div
                   key={shift.id}

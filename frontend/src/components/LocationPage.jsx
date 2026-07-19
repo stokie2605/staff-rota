@@ -7,7 +7,7 @@ export function LocationPage({ onNavigate }) {
   const locationStats = useMemo(() => {
     const stats = {};
     
-    shifts.forEach(shift => {
+    (shifts || []).forEach(shift => {
       const loc = shift.location;
       if (!stats[loc]) {
         stats[loc] = {
@@ -21,7 +21,7 @@ export function LocationPage({ onNavigate }) {
       stats[loc].totalShifts += 1;
       stats[loc].requiredGrades.add(shift.required_grade);
       
-      const isFilled = assignments.some(a => a.shift_id === shift.id);
+      const isFilled = (assignments || []).some(a => a.shift_id === shift.id);
       if (!isFilled) {
         stats[loc].unfilledShifts += 1;
       }

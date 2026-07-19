@@ -6,13 +6,13 @@ function timeToMs(dateStr, timeStr) {
 
 export function buildAlerts(rota, swapRequests, employees, selectedDate) {
   const alerts = [];
-  if (!rota) return alerts;
+  if (!rota || !rota.days) return alerts;
 
   // 1. Unstaffed shifts on selected date
   const todayData = rota.days.find(d => d.date === selectedDate);
   if (todayData) {
-    todayData.shifts.forEach(shift => {
-      if (shift.staff.length === 0) {
+    (todayData.shifts || []).forEach(shift => {
+      if ((shift.staff || []).length === 0) {
         alerts.push({
           type: "critical",
           category: shift.location,
@@ -26,8 +26,8 @@ export function buildAlerts(rota, swapRequests, employees, selectedDate) {
   // 2. EWTD 11-hour rest violations across the week
   const empShifts = {};
   rota.days.forEach(day => {
-    day.shifts.forEach(shift => {
-      shift.staff.forEach(person => {
+    (day.shifts || []).forEach(shift => {
+      (shift.staff || []).forEach(person => {
         if (!empShifts[person.employee_id]) {
           empShifts[person.employee_id] = { name: person.name, shifts: [] };
         }
@@ -65,7 +65,7 @@ export function buildAlerts(rota, swapRequests, employees, selectedDate) {
   // 3. Pending swap requests
   if (swapRequests && swapRequests.length > 0) {
     swapRequests.forEach(req => {
-      const emp = employees.find(e => e.id === req.requesting_employee_id);
+      const emp = (employees || []).find(e => e.id === req.requesting_employee_id);
       const empName = emp ? emp.name : `Employee #${req.requesting_employee_id}`;
       alerts.push({
         type: "request",

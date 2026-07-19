@@ -29,13 +29,16 @@ function AppContent() {
   const isAdmin = role === "admin";
 
   const stats = useMemo(() => {
-    const unfilled = shifts.filter(s => !assignments.some(a => a.shift_id === s.id));
-    const locums   = employees.filter(e => e.is_locum);
+    const s = shifts || [];
+    const a = assignments || [];
+    const e = employees || [];
+    const unfilled = s.filter(shift => !a.some(assign => assign.shift_id === shift.id));
+    const locums   = e.filter(emp => emp.is_locum);
     return [
-      { label: "Employees",      value: employees.length },
+      { label: "Employees",      value: e.length },
       { label: "Locum Pool",     value: locums.length },
       { label: "Unfilled Wards", value: unfilled.length },
-      { label: "Locum Offers",   value: shifts.filter(s => s.offered_to_locum_pool).length },
+      { label: "Locum Offers",   value: s.filter(shift => shift.offered_to_locum_pool).length },
     ];
   }, [employees, shifts, assignments]);
 
