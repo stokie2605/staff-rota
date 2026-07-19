@@ -93,48 +93,47 @@ export function SwapPage({ employees, refresh, setNotice }) {
 
         {/* Override Modal/Banner */}
         {showOverride && (
-          <div className="override-panel" style={{ backgroundColor: "#fdf8e2", borderLeft: "4px solid #f5c2c2", padding: "18px", marginBottom: "20px", borderRadius: "4px" }}>
-            <h4 style={{ color: "#856404", marginBottom: "5px" }}>⚠️ Swap compliance override required</h4>
-            <p style={{ color: "#856404", fontSize: "0.95rem", marginBottom: "15px" }}>{warning}</p>
+          <div className="override-panel" style={{ backgroundColor: "var(--compliance-bg)", borderLeft: "4px solid var(--compliance)", padding: "16px", marginBottom: "20px", borderRadius: "8px" }}>
+            <h4 style={{ color: "var(--compliance)", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontSize: "1.2em" }}>⚠️</span> Swap compliance override required
+            </h4>
+            <p style={{ color: "var(--text)", fontSize: "0.85rem", marginBottom: "16px", lineHeight: "1.4" }}>{warning}</p>
             
             <div style={{ display: "flex", gap: "15px", flexWrap: "wrap", alignItems: "flex-end" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", marginBottom: "4px" }}>Reason Code</label>
-                <select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)} style={{ padding: "6px" }}>
+              <div className="form-group" style={{ marginBottom: "0", minWidth: "200px" }}>
+                <label>Reason Code</label>
+                <select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}>
                   <option value="EMERGENCY_OVERRIDE">Emergency Ward Coverage</option>
                   <option value="SICKNESS_COVER">Sickness Cover</option>
                   <option value="LEAVE_COVER">Leave Cover</option>
                 </select>
               </div>
               
-              <div style={{ flexGrow: "1", minWidth: "250px" }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", marginBottom: "4px" }}>Override Justification</label>
+              <div className="form-group" style={{ flexGrow: "1", minWidth: "250px", marginBottom: "0" }}>
+                <label>Override Justification</label>
                 <input 
                   type="text" 
                   placeholder="Justification statement (minimum 5 characters)..." 
                   value={justification} 
                   onChange={(e) => setJustification(e.target.value)}
-                  style={{ width: "100%", padding: "6px" }}
                 />
               </div>
 
               <div style={{ display: "flex", gap: "10px" }}>
                 <button 
-                  className="primary-button" 
+                  className="btn btn-compliance" 
                   onClick={() => approveSwap(overrideSwapId, overrideRecipientId, true)}
-                  style={{ backgroundColor: "#d9534f", borderColor: "#d43f3a", color: "#fff", padding: "6px 15px" }}
                 >
                   Force Approve Swap
                 </button>
                 <button 
-                  className="secondary-button" 
+                  className="btn btn-outline" 
                   onClick={() => {
                     setShowOverride(false);
                     setOverrideSwapId(null);
                     setOverrideRecipientId(null);
                     setWarning("");
                   }}
-                  style={{ padding: "6px 15px" }}
                 >
                   Cancel
                 </button>
@@ -185,25 +184,26 @@ export function SwapPage({ employees, refresh, setNotice }) {
                       )}
                     </td>
                     <td>
-                      <select 
-                        value={recipients[swap.id] || ""} 
-                        onChange={(e) => handleRecipientChange(swap.id, e.target.value)}
-                        style={{ padding: "5px", width: "100%", maxWidth: "200px" }}
-                      >
-                        <option value="">Choose cover employee...</option>
-                        {qualifiedStaff.map((emp) => (
-                          <option key={emp.id} value={emp.id}>
-                            {emp.name} {emp.is_locum ? "[Locum]" : ""}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <select 
+                          value={recipients[swap.id] || ""} 
+                          onChange={(e) => handleRecipientChange(swap.id, e.target.value)}
+                          style={{ padding: "5px", width: "100%", minWidth: "180px" }}
+                        >
+                          <option value="">Choose cover employee...</option>
+                          {qualifiedStaff.map((emp) => (
+                            <option key={emp.id} value={emp.id}>
+                              {emp.name} {emp.is_locum ? "[Locum]" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </td>
                     <td>
                       <button 
-                        className="primary-button" 
+                        className="btn btn-primary" 
                         onClick={() => approveSwap(swap.id)}
                         disabled={!recipients[swap.id]}
-                        style={{ padding: "5px 12px", fontSize: "0.9rem" }}
                       >
                         Approve Swap
                       </button>

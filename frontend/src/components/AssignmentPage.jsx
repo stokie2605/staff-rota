@@ -70,63 +70,75 @@ export function AssignmentPage({ employees, shifts, assignments, refresh, setNot
       <form className="panel form-panel" onSubmit={submit}>
         <h3>Assign staff</h3>
         
-        <label>Employee</label>
-        <select required value={employeeId} onChange={(event) => {
-          setEmployeeId(event.target.value);
-          setShowOverride(false);
-          setWarning("");
-        }}>
-          <option value="">Select employee</option>
-          {employees.map((employee) => (
-            <option key={employee.id} value={employee.id}>
-              {employee.name} ({employee.grade}) - {employee.department} {employee.is_locum ? "[Locum]" : ""}
-            </option>
-          ))}
-        </select>
+        <div className="form-group">
+          <label>Employee</label>
+          <select required value={employeeId} onChange={(event) => {
+            setEmployeeId(event.target.value);
+            setShowOverride(false);
+            setWarning("");
+          }}>
+            <option value="">Select employee</option>
+            {employees.map((employee) => (
+              <option key={employee.id} value={employee.id}>
+                {employee.name} ({employee.grade}) - {employee.department} {employee.is_locum ? "[Locum]" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
         
-        <label>Shift Slot</label>
-        <select required value={shiftId} onChange={(event) => {
-          setShiftId(event.target.value);
-          setShowOverride(false);
-          setWarning("");
-        }}>
-          <option value="">Select shift</option>
-          {shifts.map((shift) => (
-            <option key={shift.id} value={shift.id}>
-              {shift.date} {shift.start_time}-{shift.end_time} ({shift.required_grade}) at {shift.location}
-            </option>
-          ))}
-        </select>
+        <div className="form-group">
+          <label>Shift Slot</label>
+          <select required value={shiftId} onChange={(event) => {
+            setShiftId(event.target.value);
+            setShowOverride(false);
+            setWarning("");
+          }}>
+            <option value="">Select shift</option>
+            {shifts.map((shift) => (
+              <option key={shift.id} value={shift.id}>
+                {shift.date} {shift.start_time}-{shift.end_time} ({shift.required_grade}) at {shift.location}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Warning Override Section */}
         {showOverride && (
-          <div className="override-panel" style={{ backgroundColor: "#fdf8e2", borderLeft: "4px solid #f5c2c2", padding: "15px", marginTop: "15px", borderRadius: "4px" }}>
-            <h4 style={{ color: "#856404", marginBottom: "5px" }}>⚠️ NHS Compliance Alert</h4>
-            <p style={{ color: "#856404", fontSize: "0.9rem", marginBottom: "12px" }}>{warning}</p>
+          <div className="override-panel" style={{ backgroundColor: "var(--compliance-bg)", borderLeft: "4px solid var(--compliance)", padding: "16px", marginTop: "16px", borderRadius: "8px" }}>
+            <h4 style={{ color: "var(--compliance)", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontSize: "1.2em" }}>⚠️</span> NHS Compliance Alert
+            </h4>
+            <p style={{ color: "var(--text)", fontSize: "0.85rem", marginBottom: "16px", lineHeight: "1.4" }}>{warning}</p>
             
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "600" }}>Reason Code</label>
-            <select required value={reasonCode} onChange={(e) => setReasonCode(e.target.value)} style={{ width: "100%", padding: "6px", marginBottom: "10px" }}>
-              <option value="EMERGENCY_OVERRIDE">Emergency Ward Coverage</option>
-              <option value="SICKNESS_COVER">Sickness Cover</option>
-              <option value="LEAVE_COVER">Leave Cover</option>
-            </select>
+            <div className="form-group">
+              <label>Reason Code</label>
+              <select required value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}>
+                <option value="EMERGENCY_OVERRIDE">Emergency Ward Coverage</option>
+                <option value="SICKNESS_COVER">Sickness Cover</option>
+                <option value="LEAVE_COVER">Leave Cover</option>
+              </select>
+            </div>
             
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "600" }}>Justification (Minimum 5 characters)</label>
-            <input 
-              type="text" 
-              required 
-              placeholder="e.g., Consultant off sick, backup doctor required." 
-              value={justification} 
-              onChange={(e) => setJustification(e.target.value)}
-              style={{ width: "100%", padding: "6px", marginBottom: "10px" }}
-            />
+            <div className="form-group" style={{ marginBottom: "0" }}>
+              <label>Justification (Minimum 5 characters)</label>
+              <input 
+                type="text" 
+                required 
+                placeholder="e.g., Consultant off sick, backup doctor required." 
+                value={justification} 
+                onChange={(e) => setJustification(e.target.value)}
+              />
+            </div>
           </div>
         )}
 
         {error && <p className="error-message">{error}</p>}
         
-        <button className={showOverride ? "warning-button" : "primary-button"}>
-          {showOverride ? "Force Override & Assign" : "Assign"}
+        <button 
+          className={`btn ${showOverride ? "btn-compliance" : "btn-primary"}`} 
+          style={{ width: "100%", marginTop: "16px" }}
+        >
+          {showOverride ? "Force Override & Assign" : "Assign Staff"}
         </button>
       </form>
       
@@ -155,7 +167,7 @@ export function AssignmentPage({ employees, shifts, assignments, refresh, setNot
                   <div style={{ fontSize: "0.8rem", color: "#666" }}>{assignment.shift.location}</div>
                 </td>
                 <td><span className="pill">{assignment.department}</span></td>
-                <td><button className="danger-button" onClick={() => remove(assignment.id)}>Remove</button></td>
+                <td><button className="btn btn-outline" style={{ color: "var(--critical)", borderColor: "var(--critical-bg)" }} onClick={() => remove(assignment.id)}>Remove</button></td>
               </tr>
             ))}
           </tbody>

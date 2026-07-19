@@ -12,6 +12,7 @@ import { ShiftPage }      from "./components/ShiftPage";
 import { AssignmentPage } from "./components/AssignmentPage";
 import { SwapPage }       from "./components/SwapPage";
 import { AuditPage }      from "./components/AuditPage";
+import { LocationPage }   from "./components/LocationPage";
 
 function toInputDate(d) { return d.toISOString().slice(0, 10); }
 function addDays(dateText, days) {
@@ -188,10 +189,20 @@ function App() {
           {activeView === "shifts" && isAdmin && (
             <ShiftPage shifts={shifts} refresh={refreshAll} setNotice={setNotice} />
           )}
+          {/* Swaps */}
           {activeView === "swaps" && isAdmin && (
             <SwapPage employees={employees} refresh={refreshAll} setNotice={setNotice} />
           )}
-          {activeView === "audit" && isAdmin && <AuditPage />}
+
+          {/* Locations */}
+          {activeView === "locations" && (
+            <LocationPage shifts={shifts} assignments={assignments} onNavigate={setActiveView} />
+          )}
+
+          {/* Audit Logs */}
+          {activeView === "audit" && isAdmin && (
+            <AuditPage />
+          )}
         </main>
       </div>
     </div>

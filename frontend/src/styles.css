@@ -1223,7 +1223,7 @@ tr:hover td { background: var(--surface-2); }
   justify-content: space-between;
 }
 
-/* ─── Responsive ─────────────────────────────────────────── */
+/* ─── Responsive & Mobile ────────────────────────────────────────── */
 @media (max-width: 900px) {
   .panel-grid { grid-template-columns: 1fr; }
   .kpi-grid   { grid-template-columns: repeat(2, 1fr); }
@@ -1231,9 +1231,38 @@ tr:hover td { background: var(--surface-2); }
   .sidebar-org-name, .sidebar-org-sub,
   .nav-item span, .sidebar-new-shift { display: none; }
   .nav-item   { justify-content: center; padding: 9px; }
+  
+  /* Gantt View Toggle */
+  .gantt-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .gantt-controls { width: 100%; justify-content: space-between; }
 }
 
-@media (max-width: 640px) {
-  .kpi-grid       { grid-template-columns: 1fr 1fr; }
-  .topnav-search  { display: none; }
+@media (max-width: 768px) {
+  /* Needs Attention Alert Cards */
+  .needs-attention { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
+  .alert-card { min-width: 280px; flex-shrink: 0; flex-direction: column; align-items: flex-start; }
+  .alert-actions { width: 100%; justify-content: stretch; }
+  .alert-actions .btn { flex: 1; }
+  
+  /* TopNav */
+  .topnav-clock { display: none; }
+  .topnav-search-wrapper { width: 160px; }
+  
+  /* Modals */
+  .modal-panel { width: 95vw; max-height: 90vh; border-radius: 12px; }
+  .modal-header { padding: 16px 20px; }
+  .modal-body { padding: 16px 20px; }
+  
+  /* TopNav Dropdowns */
+  .topnav-dropdown { position: fixed; top: 60px; right: 10px; left: 10px; width: auto; max-width: none; }
+  .notif-dropdown, .profile-dropdown { width: auto; }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .topnav-search-wrapper { display: none; } /* Hide search entirely on very small screens */
+  .gantt-card { border-radius: 0; border-left: none; border-right: none; }
+  .gantt-ward-cell { width: 80px; font-size: 0.75rem; padding: 0 8px; }
+  .app-body { height: calc(100vh - 50px); }
+  .topnav { height: 50px; padding: 0 12px; }
 }

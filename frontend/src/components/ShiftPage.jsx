@@ -35,33 +35,45 @@ export function ShiftPage({ shifts, refresh, setNotice }) {
       <form className="panel form-panel" onSubmit={submit}>
         <h3>Add shift</h3>
         
-        <label>Date</label>
-        <input required type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} />
+        <div className="form-group">
+          <label>Date</label>
+          <input required type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} />
+        </div>
         
-        <label>Start Time</label>
-        <input required type="time" value={form.start_time} onChange={(event) => setForm({ ...form, start_time: event.target.value })} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          <div className="form-group">
+            <label>Start Time</label>
+            <input required type="time" value={form.start_time} onChange={(event) => setForm({ ...form, start_time: event.target.value })} />
+          </div>
+          
+          <div className="form-group">
+            <label>End Time</label>
+            <input required type="time" value={form.end_time} onChange={(event) => setForm({ ...form, end_time: event.target.value })} />
+          </div>
+        </div>
         
-        <label>End Time</label>
-        <input required type="time" value={form.end_time} onChange={(event) => setForm({ ...form, end_time: event.target.value })} />
+        <div className="form-group">
+          <label>Location / Ward</label>
+          <input required placeholder="e.g. Ward A, ICU" value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
+        </div>
         
-        <label>Location / Ward</label>
-        <input required placeholder="e.g. Ward A, ICU" value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
-        
-        <label>Required Staff Grade</label>
-        <select 
-          required 
-          value={form.required_grade} 
-          onChange={(event) => setForm({ ...form, required_grade: event.target.value })}
-        >
-          <option value="Band 5 Nurse">Band 5 Nurse (Staff Nurse)</option>
-          <option value="Band 6 Nurse">Band 6 Nurse (Senior / Sister)</option>
-          <option value="Junior Doctor">Junior Doctor</option>
-          <option value="Registrar">Registrar</option>
-          <option value="Consultant">Consultant</option>
-        </select>
+        <div className="form-group">
+          <label>Required Staff Grade</label>
+          <select 
+            required 
+            value={form.required_grade} 
+            onChange={(event) => setForm({ ...form, required_grade: event.target.value })}
+          >
+            <option value="Band 5 Nurse">Band 5 Nurse (Staff Nurse)</option>
+            <option value="Band 6 Nurse">Band 6 Nurse (Senior / Sister)</option>
+            <option value="Junior Doctor">Junior Doctor</option>
+            <option value="Registrar">Registrar</option>
+            <option value="Consultant">Consultant</option>
+          </select>
+        </div>
 
         {error && <p className="error-message">{error}</p>}
-        <button className="primary-button">Add Shift</button>
+        <button className="btn btn-primary" style={{ width: "100%", marginTop: "10px" }}>Add Shift</button>
       </form>
       
       <div className="panel table-panel">
@@ -91,7 +103,7 @@ export function ShiftPage({ shifts, refresh, setNotice }) {
                     <span style={{ fontSize: "0.80rem", color: "#666" }}>Closed Pool</span>
                   )}
                 </td>
-                <td><button className="danger-button" onClick={() => remove(shift.id)}>Delete</button></td>
+                <td><button className="btn btn-outline" style={{ color: "var(--critical)", borderColor: "var(--critical-bg)" }} onClick={() => remove(shift.id)}>Delete</button></td>
               </tr>
             ))}
           </tbody>
