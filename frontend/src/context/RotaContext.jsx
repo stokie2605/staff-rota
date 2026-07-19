@@ -22,7 +22,7 @@ export function RotaProvider({ children }) {
       const [emp, shf, rta, swp, abs] = await Promise.all([
         api.getEmployees(),
         api.getShifts(),
-        api.getWeeklyRota(selectedDate),
+        api.getWeek(selectedDate),
         api.getSwapRequests(),
         api.getAbsences() // Note: Need to add this to api.js
       ]);
