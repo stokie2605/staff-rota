@@ -28,11 +28,7 @@ function AppContent() {
     employees, shifts, assignments, loading, backendOk, refreshAll, currentUser
   } = useRota();
 
-  if (!currentUser) {
-    return <LoginPage />;
-  }
-
-  const isAdmin = currentUser.role === "admin";
+  const isAdmin = currentUser?.role === "admin";
 
   const stats = useMemo(() => {
     const s = shifts || [];
@@ -47,6 +43,10 @@ function AppContent() {
       { label: "Locum Offers",   value: s.filter(shift => shift.offered_to_locum_pool).length },
     ];
   }, [employees, shifts, assignments]);
+
+  if (!currentUser) {
+    return <LoginPage />;
+  }
 
   return (
     <div className="app-shell">
