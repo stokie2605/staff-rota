@@ -126,58 +126,75 @@ function TwentyFourHourView({ activeDay, wards, isAdmin, refresh }) {
         </div>
       </div>
 
-      {/* Ward rows */}
-      {wards.map(ward => (
-        <div key={ward} className="gantt-row">
-          <div className="gantt-ward-cell">{ward}</div>
-          <div className="gantt-track">
-            {/* Grid lines */}
-            {TIME_LABELS.map((_, i) => (
-              <div
-                key={i}
-                className="gantt-gridline"
-                style={{ left: `${(i / (TIME_LABELS.length - 1)) * 100}%` }}
-              />
-            ))}
-
-            {/* Now line */}
-            {showNow && (
-              <div className="gantt-now-line" style={{ left: `${currentPct}%` }}>
-                <div className="gantt-now-dot" />
-              </div>
-            )}
-
-            {/* Shift blocks */}
-            {wardShifts(ward).map(shift => {
-              const style = getShiftStyle(shift.start_time, shift.end_time);
-              if (!style) return null;
-              const isUnassigned = shift.staff.length === 0;
-              const label = isUnassigned
-                ? "Unassigned"
-                : shift.staff.map(p => p.name.replace(/^(dr\.|sister|nurse)\s+/i, "")).join(", ");
-
-              return (
-                <div
-                  key={shift.id}
-                  className={`gantt-shift ${isUnassigned ? "gantt-shift--unassigned" : "gantt-shift--assigned"}`}
-                  style={style}
-                  title={`${shift.start_time}–${shift.end_time} · ${label}`}
-                >
-                  <span className="gantt-shift-name">{label}</span>
-                  <span className="gantt-shift-time">{shift.start_time}–{shift.end_time}</span>
-                </div>
-              );
-            })}
-
-            {/* Empty ward */}
-            {wardShifts(ward).length === 0 && (
-              <div className="gantt-empty" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", paddingLeft: "12px" }}>
-                No shifts
-              </div>
-            )}
+      {/* Ward rows — wrapped in a relative container for the single now-line */}
+      <div style={{ position: "relative" }}>
+        {/* Single continuous now-line spanning all rows */}
+        {showNow && (
+          <div style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: `calc(130px + ${currentPct / 100} * (100% - 130px))`,
+            width: "2px",
+            background: "#3b82f6",
+            zIndex: 10,
+            pointerEvents: "none"
+          }}>
+            <div style={{
+              position: "absolute",
+              top: "-4px",
+              left: "-4px",
+              width: "10px",
+              height: "10px",
+              borderRadius: "50%",
+              background: "#3b82f6"
+            }} />
           </div>
-        </div>
-      ))}
+        )}
+
+        {wards.map(ward => (
+          <div key={ward} className="gantt-row">
+            <div className="gantt-ward-cell">{ward}</div>
+            <div className="gantt-track">
+              {/* Grid lines */}
+              {TIME_LABELS.map((_, i) => (
+                <div
+                  key={i}
+                  className="gantt-gridline"
+                  style={{ left: `${(i / (TIME_LABELS.length - 1)) * 100}%` }}
+                />
+              ))}
+
+              {/* Shift blocks */}
+              {wardShifts(ward).map(shift => {
+                const style = getShiftStyle(shift.start_time, shift.end_time);
+                if (!style) return null;
+                const isUnassigned = shift.staff.length === 0;
+                const label = isUnassigned
+                  ? "Unassigned"
+                  : shift.staff.map(p => p.name.replace(/^(dr\.|sister|nurse)\s+/i, "")).join(", ");
+                return (
+                  <div
+                    key={shift.id}
+                    className={`gantt-shift ${isUnassigned ? "gantt-shift--unassigned" : "gantt-shift--assigned"}`}
+                    style={style}
+                    title={`${shift.start_time}–${shift.end_time} · ${label}`}
+                  >
+                    <span className="gantt-shift-name">{label}</span>
+                    <span className="gantt-shift-time">{shift.start_time}–{shift.end_time}</span>
+                  </div>
+                );
+              })}
+
+              {wardShifts(ward).length === 0 && (
+                <div className="gantt-empty" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", paddingLeft: "12px" }}>
+                  No shifts
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
