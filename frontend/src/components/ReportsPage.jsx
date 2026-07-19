@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { useRota } from "../context/RotaContext";
 
 export function ReportsPage() {
-  const { employees, shifts, assignments, loading } = useRota();
+  const { employees, shifts, assignments, loading, getLabel } = useRota();
 
   const stats = useMemo(() => {
     const e = employees || [];
@@ -53,7 +53,7 @@ export function ReportsPage() {
 
       <div className="kpi-grid">
         <div className="kpi-card" style={{ borderTop: "4px solid var(--primary)" }}>
-          <span className="kpi-label">Total Staff</span>
+          <span className="kpi-label">Total {getLabel("staff")}</span>
           <strong className="kpi-value">{stats.totalStaff}</strong>
         </div>
         <div className="kpi-card" style={{ borderTop: "4px solid var(--compliance)" }}>
@@ -71,12 +71,12 @@ export function ReportsPage() {
       </div>
 
       <div className="panel table-panel" style={{ marginTop: "24px" }}>
-        <h3>Departmental Breakdown</h3>
+        <h3>{getLabel("location")} Breakdown</h3>
         <table>
           <thead>
             <tr>
-              <th>Department / Ward</th>
-              <th>Registered Staff</th>
+              <th>{getLabel("location")}</th>
+              <th>Registered {getLabel("staff")}</th>
               <th>Total Scheduled Shifts</th>
               <th>Unfilled Shifts</th>
               <th>Fulfillment %</th>

@@ -1,42 +1,49 @@
-const NAV_ITEMS = [
-  { id: "dashboard",   label: "Dashboard",   icon: "⊞",  adminOnly: false },
-  { id: "roster",      label: "Roster",      icon: "📅", adminOnly: false },
-  { id: "staff",       label: "Staff",       icon: "👤", adminOnly: true  },
-  { id: "assignments", label: "Assign Staff",icon: "📋", adminOnly: true  },
-  { id: "swaps",       label: "Shift Swaps", icon: "🔄", adminOnly: true  },
-  { id: "locations",   label: "Locations",   icon: "📍", adminOnly: false },
-  { id: "absences",    label: "Absences",    icon: "🌴", adminOnly: true  },
-  { id: "reports",     label: "Reports",     icon: "📊", adminOnly: true  },
-  { id: "audit",       label: "Audit Logs",  icon: "🗂️", adminOnly: true  },
-];
+import { useRota } from "../context/RotaContext";
 
-export function Sidebar({ activeView, setActiveView, role, setRole }) {
+export function Sidebar({ activeView, setActiveView, role }) {
+  const { getLabel, logout, industryTemplate, setIndustryTemplate } = useRota();
   const isAdmin = role === "admin";
+
+  const NAV_ITEMS = [
+    { id: "dashboard",   label: "Dashboard",   icon: "⊞",  adminOnly: false },
+    { id: "roster",      label: "Roster",      icon: "📅", adminOnly: false },
+    { id: "staff",       label: getLabel("staff"), icon: "👤", adminOnly: true  },
+    { id: "assignments", label: `Assign ${getLabel("staff")}`,icon: "📋", adminOnly: true  },
+    { id: "swaps",       label: "Shift Swaps", icon: "🔄", adminOnly: true  },
+    { id: "locations",   label: getLabel("location") + "s", icon: "📍", adminOnly: false },
+    { id: "absences",    label: "Absences",    icon: "🌴", adminOnly: true  },
+    { id: "reports",     label: "Reports",     icon: "📊", adminOnly: true  },
+    { id: "audit",       label: "Audit Logs",  icon: "🗂️", adminOnly: true  },
+  ];
+
   const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <aside className="sidebar">
       {/* Org Header */}
-      <div className="sidebar-org">
-        <div className="sidebar-org-icon">+</div>
+      <div className="sidebar-org" style={{ marginBottom: "20px" }}>
+        <div className="sidebar-org-icon">✦</div>
         <div>
-          <div className="sidebar-org-name">City General</div>
-          <div className="sidebar-org-sub">Clinical Ops</div>
+          <div className="sidebar-org-name">RotaCare</div>
+          <div className="sidebar-org-sub">SaaS Portal</div>
         </div>
       </div>
 
-      {/* Role switcher */}
-      <div className="sidebar-role-switcher">
-        <span className="sidebar-role-label">Access Console</span>
-        <select
-          className="sidebar-role-select"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="admin">🔒 Rota Manager</option>
-          <option value="staff">👁️ Clinical Staff</option>
-        </select>
-      </div>
+      {isAdmin && (
+        <div className="sidebar-role-switcher" style={{ marginBottom: "20px" }}>
+          <span className="sidebar-role-label">Industry Template</span>
+          <select
+            className="sidebar-role-select"
+            value={industryTemplate}
+            onChange={(e) => setIndustryTemplate(e.target.value)}
+          >
+            <option value="dental">🦷 Dental Clinic</option>
+            <option value="physio">🏃 Physio & Rehab</option>
+            <option value="care_home">🏡 Care Home</option>
+            <option value="general">🏥 General Medical</option>
+          </select>
+        </div>
+      )}
 
       {/* Nav */}
       <nav className="sidebar-nav">
@@ -70,7 +77,7 @@ export function Sidebar({ activeView, setActiveView, role, setRole }) {
           <span className="nav-icon">⚙️</span>
           <span>Settings</span>
         </button>
-        <button className="nav-item" onClick={() => alert("Logged out")}>
+        <button className="nav-item" onClick={logout}>
           <span className="nav-icon">↩️</span>
           <span>Logout</span>
         </button>

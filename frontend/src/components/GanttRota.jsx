@@ -126,6 +126,11 @@ export function GanttRota({ role, searchQuery = "" }) {
 
 // ─── 24 Hour Gantt View ────────────────────────────────────────────
 function TwentyFourHourView({ selectedDate, wards, isAdmin, refresh, searchQuery = "", shifts, assignments }) {
+  const [expandedWards, setExpandedWards] = useState({});
+  const toggleWard = (ward) => {
+    setExpandedWards(prev => ({ ...prev, [ward]: !prev[ward] }));
+  };
+
   // Filter wards by search query (matches ward name or any staff name)
   const q = searchQuery.toLowerCase().trim();
   const dailyShifts = (shifts || []).filter(s => s.date === selectedDate);
@@ -188,54 +193,84 @@ function TwentyFourHourView({ selectedDate, wards, isAdmin, refresh, searchQuery
           </div>
         )}
 
-        {filteredWards.length === 0 && q ? (
+        {filteredWards.length === 0 ? (
           <div className="gantt-empty" style={{ padding: "32px", textAlign: "center" }}>
-            No wards or staff matching "{searchQuery}"
+            No locations available
           </div>
         ) : (
-          filteredWards.map(ward => (
-          <div key={ward} className="gantt-row">
-            <div className="gantt-ward-cell">{ward}</div>
-            <div className="gantt-track">
-              {/* Grid lines */}
-              {TIME_LABELS.map((_, i) => (
-                <div
-                  key={i}
-                  className="gantt-gridline"
-                  style={{ left: `${(i / (TIME_LABELS.length - 1)) * 100}%` }}
-                />
-              ))}
+          filteredWards.map(ward => {
+            const wShifts = wardShifts(ward);
+            // Auto-collapse if 0 shifts and not explicitly expanded
+            const isCollapsed = wShifts.length === 0 && !expandedWards[ward];
 
-              {/* Shift blocks */}
-              {wardShifts(ward).map(shift => {
-                const style = getShiftStyle(shift.start_time, shift.end_time);
-                if (!style) return null;
-                const shiftAssignments = (assignments || []).filter(a => a.shift_id === shift.id);
-                const isUnassigned = shiftAssignments.length === 0;
-                const label = isUnassigned
-                  ? "Unassigned"
-                  : shiftAssignments.map(p => p.name.replace(/^(dr\.|sister|nurse)\s+/i, "")).join(", ");
-                return (
-                  <div
-                    key={shift.id}
-                    className={`gantt-shift ${isUnassigned ? "gantt-shift--unassigned" : "gantt-shift--assigned"} ${!shift.is_published ? "draft-shift" : ""}`}
-                    style={style}
-                    title={`${shift.start_time}–${shift.end_time} · ${label}`}
-                  >
-                    <span className="gantt-shift-name">{label}</span>
-                    <span className="gantt-shift-time">{shift.start_time}–{shift.end_time}</span>
-                  </div>
-                );
-              })}
-
-              {wardShifts(ward).length === 0 && (
-                <div className="gantt-empty" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", paddingLeft: "12px" }}>
-                  No shifts
+            if (isCollapsed) {
+              return (
+                <div 
+                  key={ward} 
+                  className="gantt-row accordion-row" 
+                  onClick={() => toggleWard(ward)}
+                  style={{ cursor: "pointer", background: "var(--surface-2)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", padding: "8px 12px" }}
+                >
+                  <span style={{ marginRight: "10px", fontSize: "0.8rem", color: "var(--text-muted)" }}>▶</span>
+                  <strong style={{ fontSize: "0.9rem" }}>{ward}</strong>
+                  <span style={{ marginLeft: "8px", fontSize: "0.8rem", color: "var(--text-faint)" }}>(0 Active Shifts)</span>
                 </div>
-              )}
-            </div>
-          </div>
-        )))}
+              );
+            }
+
+            return (
+              <div key={ward} className="gantt-row">
+                <div 
+                  className="gantt-ward-cell" 
+                  onClick={() => toggleWard(ward)}
+                  style={{ cursor: wShifts.length === 0 ? "pointer" : "default" }}
+                  title={wShifts.length === 0 ? "Click to collapse" : ""}
+                >
+                  {wShifts.length === 0 && <span style={{ marginRight: "5px", fontSize: "0.7rem", color: "var(--text-muted)" }}>▼</span>}
+                  {ward}
+                </div>
+                <div className="gantt-track">
+                  {/* Grid lines */}
+                  {TIME_LABELS.map((_, i) => (
+                    <div
+                      key={i}
+                      className="gantt-gridline"
+                      style={{ left: `${(i / (TIME_LABELS.length - 1)) * 100}%` }}
+                    />
+                  ))}
+
+                  {/* Shift blocks */}
+                  {wShifts.map(shift => {
+                    const style = getShiftStyle(shift.start_time, shift.end_time);
+                    if (!style) return null;
+                    const shiftAssignments = (assignments || []).filter(a => a.shift_id === shift.id);
+                    const isUnassigned = shiftAssignments.length === 0;
+                    const label = isUnassigned
+                      ? "Unassigned"
+                      : shiftAssignments.map(p => p.name.replace(/^(dr\.|sister|nurse)\s+/i, "")).join(", ");
+                    return (
+                      <div
+                        key={shift.id}
+                        className={`gantt-shift ${isUnassigned ? "gantt-shift--unassigned" : "gantt-shift--assigned"} ${!shift.is_published ? "draft-shift" : ""}`}
+                        style={style}
+                        title={`${shift.start_time}–${shift.end_time} · ${label}`}
+                      >
+                        <span className="gantt-shift-name">{label}</span>
+                        <span className="gantt-shift-time">{shift.start_time}–{shift.end_time}</span>
+                      </div>
+                    );
+                  })}
+
+                  {wShifts.length === 0 && (
+                    <div className="gantt-empty" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", paddingLeft: "12px", color: "var(--text-muted)" }}>
+                      Click location to collapse
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

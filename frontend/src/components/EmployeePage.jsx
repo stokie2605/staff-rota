@@ -6,7 +6,7 @@ import { useToast } from "../context/ToastContext";
 const emptyEmployee = { name: "", role: "", department: "", grade: "Band 5 Nurse", is_locum: false };
 
 export function EmployeePage() {
-  const { employees, refreshAll } = useRota();
+  const { employees, refreshAll, getLabel } = useRota();
   const { addToast } = useToast();
   const [form, setForm] = useState(emptyEmployee);
   const [error, setError] = useState("");
@@ -37,7 +37,7 @@ export function EmployeePage() {
   return (
     <section className="panel-grid">
       <form className="panel form-panel" onSubmit={submit}>
-        <h3>Add employee</h3>
+        <h3>Add {getLabel("staff").toLowerCase()}</h3>
         
         <div className="form-group">
           <label>Full Name</label>
@@ -60,10 +60,10 @@ export function EmployeePage() {
         </div>
         
         <div className="form-group">
-          <label>Department / Ward</label>
+          <label>{getLabel("location")} / Department</label>
           <input
             required
-            placeholder="e.g. A&E, Ward 3"
+            placeholder="e.g. Room 1, Unit B"
             value={form.department}
             onChange={(event) => setForm({ ...form, department: event.target.value })}
           />
@@ -97,11 +97,11 @@ export function EmployeePage() {
         </div>
 
         {error && <p className="error-message">{error}</p>}
-        <button className="btn btn-primary" style={{ width: "100%", marginTop: "10px" }}>Add Employee</button>
+        <button className="btn btn-primary" style={{ width: "100%", marginTop: "10px" }}>Add {getLabel("staff")}</button>
       </form>
       
       <div className="panel table-panel">
-        <h3>Employee directory</h3>
+        <h3>{getLabel("staff")} directory</h3>
         <table>
           <thead>
             <tr>

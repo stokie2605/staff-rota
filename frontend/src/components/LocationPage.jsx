@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useRota } from "../context/RotaContext";
 
 export function LocationPage({ onNavigate }) {
-  const { shifts, assignments } = useRota();
+  const { shifts, assignments, getLabel } = useRota();
   // Aggregate data by unique location
   const locationStats = useMemo(() => {
     const stats = {};
@@ -35,7 +35,7 @@ export function LocationPage({ onNavigate }) {
       <div className="panel table-panel" style={{ padding: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
           <div>
-            <h3 style={{ marginBottom: "8px" }}>Ward & Location Directory</h3>
+            <h3 style={{ marginBottom: "8px" }}>{getLabel("location")} Directory</h3>
             <p className="subtitle">
               Overview of active clinical environments and their current staffing demand.
             </p>
@@ -47,7 +47,7 @@ export function LocationPage({ onNavigate }) {
 
         {locationStats.length === 0 ? (
           <div className="empty-state" style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
-            No locations active. Add a shift to register a new ward.
+            No {getLabel("location").toLowerCase()}s active. Add a shift to register a new {getLabel("location").toLowerCase()}.
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" }}>

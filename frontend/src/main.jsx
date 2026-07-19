@@ -17,17 +17,22 @@ import { AuditPage }      from "./components/AuditPage";
 import { LocationPage }   from "./components/LocationPage";
 import { AbsencePage }    from "./components/AbsencePage";
 import { ReportsPage }    from "./components/ReportsPage";
+import { LoginPage }      from "./components/LoginPage";
+import { MySchedule }     from "./components/MySchedule";
 
 function AppContent() {
   const [activeView, setActiveView]  = useState("dashboard");
-  const [role,       setRole]        = useState("admin");
   const [searchQuery,  setSearchQuery]  = useState("");
 
   const { 
-    employees, shifts, assignments, loading, backendOk, refreshAll
+    employees, shifts, assignments, loading, backendOk, refreshAll, currentUser
   } = useRota();
 
-  const isAdmin = role === "admin";
+  if (!currentUser) {
+    return <LoginPage />;
+  }
+
+  const isAdmin = currentUser.role === "admin";
 
   const stats = useMemo(() => {
     const s = shifts || [];
@@ -43,26 +48,20 @@ function AppContent() {
     ];
   }, [employees, shifts, assignments]);
 
-  // Reset to dashboard view when switching to staff role
-  React.useEffect(() => {
-    if (role === "staff") setActiveView("dashboard");
-  }, [role]);
-
   return (
     <div className="app-shell">
       <TopNav
         onNavigate={setActiveView}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        role={role}
+        role={currentUser.role}
       />
 
       <div className="app-body">
         <Sidebar
           activeView={activeView}
           setActiveView={setActiveView}
-          role={role}
-          setRole={setRole}
+          role={currentUser.role}
         />
 
         <main className="main-content">
@@ -75,29 +74,33 @@ function AppContent() {
 
           {/* Dashboard view */}
           {activeView === "dashboard" && backendOk && (
-            <>
-              <NeedsAttention onNavigate={setActiveView} />
+            isAdmin ? (
+              <>
+                <NeedsAttention onNavigate={setActiveView} />
 
-              <GanttRota
-                role={role}
-                searchQuery={searchQuery}
-              />
+                <GanttRota
+                  role={currentUser.role}
+                  searchQuery={searchQuery}
+                />
 
-              {/* KPI row */}
-              <div className="kpi-grid">
-                {stats.map(stat => (
-                  <div className="kpi-card" key={stat.label}>
-                    <span className="kpi-label">{stat.label}</span>
-                    <strong className="kpi-value">{stat.value}</strong>
-                  </div>
-                ))}
-              </div>
-            </>
+                {/* KPI row */}
+                <div className="kpi-grid">
+                  {stats.map(stat => (
+                    <div className="kpi-card" key={stat.label}>
+                      <span className="kpi-label">{stat.label}</span>
+                      <strong className="kpi-value">{stat.value}</strong>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <MySchedule />
+            )
           )}
 
           {/* Roster view (Gantt only) */}
           {activeView === "roster" && (
-            <GanttRota role={role} searchQuery={searchQuery} />
+            <GanttRota role={currentUser.role} searchQuery={searchQuery} />
           )}
 
           {/* Admin-only views */}

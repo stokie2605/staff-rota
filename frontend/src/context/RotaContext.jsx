@@ -16,6 +16,34 @@ export function RotaProvider({ children }) {
   const [backendOk, setBackendOk] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
 
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState(null); // null means logged out
+
+  // Global Configuration State
+  const [industryTemplate, setIndustryTemplate] = useState("dental");
+
+  const getLabel = useCallback((type) => {
+    if (industryTemplate === "dental") {
+      return type === "location" ? "Chair" : "Practitioner";
+    }
+    if (industryTemplate === "care_home") {
+      return type === "location" ? "Unit/Floor" : "Carer";
+    }
+    if (industryTemplate === "physio") {
+      return type === "location" ? "Treatment Room" : "Therapist";
+    }
+    // general default
+    return type === "location" ? "Location" : "Staff";
+  }, [industryTemplate]);
+
+  const login = (user) => {
+    setCurrentUser(user);
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+  };
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -77,7 +105,13 @@ export function RotaProvider({ children }) {
     backendOk,
     selectedDate,
     setSelectedDate,
-    refreshAll: loadData
+    refreshAll: loadData,
+    currentUser,
+    login,
+    logout,
+    industryTemplate,
+    setIndustryTemplate,
+    getLabel
   };
 
   return <RotaContext.Provider value={value}>{children}</RotaContext.Provider>;
