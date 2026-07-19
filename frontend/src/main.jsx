@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 import { api, downloadRotaCsv } from "./services/api";
+import { buildAlerts }    from "./utils/alerts";
 import { TopNav }         from "./components/TopNav";
 import { Sidebar }        from "./components/Sidebar";
 import { NeedsAttention } from "./components/NeedsAttention";
@@ -33,6 +34,8 @@ function App() {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState("");
   const [notice,       setNotice]       = useState("");
+  const [searchQuery,  setSearchQuery]  = useState("");
+  const [backendOk,    setBackendOk]    = useState(true);
 
   async function refreshAll() {
     setLoading(true);
@@ -50,7 +53,9 @@ function App() {
       setAssignments(asnData);
       setRota(rotaData);
       setSwapRequests(swapData);
+      setBackendOk(true);
     } catch (err) {
+      setBackendOk(false);
       setError("Backend is waking up from sleep. Please retry in a moment.");
       console.error(err);
     } finally {
@@ -76,11 +81,24 @@ function App() {
     ];
   }, [employees, shifts, assignments]);
 
+  // Compute alerts once, shared between TopNav notifications and NeedsAttention panel
+  const alerts = useMemo(
+    () => buildAlerts(rota, swapRequests, employees, selectedDate),
+    [rota, swapRequests, employees, selectedDate]
+  );
+
   const isAdmin = role === "admin";
 
   return (
     <div className="app-shell">
-      <TopNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TopNav
+        alerts={alerts}
+        onNavigate={setActiveView}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        role={role}
+        backendOk={backendOk}
+      />
 
       <div className="app-body">
         <Sidebar
@@ -111,12 +129,8 @@ function App() {
           {activeView === "dashboard" && !error && (
             <>
               <NeedsAttention
-                rota={rota}
-                swapRequests={swapRequests}
-                employees={employees}
-                selectedDate={selectedDate}
+                alerts={alerts}
                 onNavigate={setActiveView}
-                refresh={refreshAll}
               />
 
               <GanttRota
@@ -128,6 +142,7 @@ function App() {
                 onToday={() => setSelectedDate(toInputDate(new Date()))}
                 refresh={refreshAll}
                 role={role}
+                searchQuery={searchQuery}
               />
 
               {/* KPI row */}
@@ -153,6 +168,7 @@ function App() {
               onToday={() => setSelectedDate(toInputDate(new Date()))}
               refresh={refreshAll}
               role={role}
+              searchQuery={searchQuery}
             />
           )}
 

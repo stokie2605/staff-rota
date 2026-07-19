@@ -38,7 +38,7 @@ function generateTimeLabels() {
 const TIME_LABELS = generateTimeLabels(); // 13 labels: 06:00 … 06:00+1
 
 // ─── Main Component ────────────────────────────────────────────────
-export function GanttRota({ rota, selectedDate, loading, onPrevious, onNext, onToday, refresh, role }) {
+export function GanttRota({ rota, selectedDate, loading, onPrevious, onNext, onToday, refresh, role, searchQuery = "" }) {
   const [view, setView] = useState("24h");
 
   if (loading || !rota) {
@@ -90,18 +90,29 @@ export function GanttRota({ rota, selectedDate, loading, onPrevious, onNext, onT
 
       {/* Content */}
       {view === "week" ? (
-        <WeekView rota={rota} selectedDate={selectedDate} isAdmin={isAdmin} refresh={refresh} />
+        <WeekView rota={rota} selectedDate={selectedDate} isAdmin={isAdmin} refresh={refresh} searchQuery={searchQuery} />
       ) : view === "3days" ? (
-        <ThreeDayView rota={rota} selectedDate={selectedDate} wards={wards} isAdmin={isAdmin} refresh={refresh} />
+        <ThreeDayView rota={rota} selectedDate={selectedDate} wards={wards} isAdmin={isAdmin} refresh={refresh} searchQuery={searchQuery} />
       ) : (
-        <TwentyFourHourView activeDay={activeDay} wards={wards} isAdmin={isAdmin} refresh={refresh} />
+        <TwentyFourHourView activeDay={activeDay} wards={wards} isAdmin={isAdmin} refresh={refresh} searchQuery={searchQuery} />
       )}
     </div>
   );
 }
 
 // ─── 24 Hour Gantt View ────────────────────────────────────────────
-function TwentyFourHourView({ activeDay, wards, isAdmin, refresh }) {
+function TwentyFourHourView({ activeDay, wards, isAdmin, refresh, searchQuery = "" }) {
+  // Filter wards by search query (matches ward name or any staff name)
+  const q = searchQuery.toLowerCase().trim();
+  const filteredWards = q
+    ? wards.filter(ward => {
+        if (ward.toLowerCase().includes(q)) return true;
+        const shifts = activeDay ? activeDay.shifts.filter(s => s.location === ward) : [];
+        return shifts.some(shift =>
+          shift.staff.some(p => p.name.toLowerCase().includes(q))
+        );
+      })
+    : wards;
   // Current time indicator
   const now = new Date();
   const currentMins = now.getHours() * 60 + now.getMinutes();
@@ -152,7 +163,12 @@ function TwentyFourHourView({ activeDay, wards, isAdmin, refresh }) {
           </div>
         )}
 
-        {wards.map(ward => (
+        {filteredWards.length === 0 && q ? (
+          <div className="gantt-empty" style={{ padding: "32px", textAlign: "center" }}>
+            No wards or staff matching "{searchQuery}"
+          </div>
+        ) : (
+          filteredWards.map(ward => (
           <div key={ward} className="gantt-row">
             <div className="gantt-ward-cell">{ward}</div>
             <div className="gantt-track">
@@ -193,7 +209,7 @@ function TwentyFourHourView({ activeDay, wards, isAdmin, refresh }) {
               )}
             </div>
           </div>
-        ))}
+        )))}
       </div>
     </div>
   );
