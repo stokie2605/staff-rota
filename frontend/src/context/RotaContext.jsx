@@ -32,10 +32,18 @@ export function RotaProvider({ children }) {
       
       // Extract assignments from rota structure for easier list rendering
       const assigns = [];
-      for (const date in rta) {
-        for (const slot in rta[date]) {
-          rta[date][slot].assignments.forEach(a => assigns.push(a));
-        }
+      if (rta && rta.days) {
+        rta.days.forEach(day => {
+          (day.shifts || []).forEach(shift => {
+            (shift.staff || []).forEach(st => {
+              assigns.push({
+                ...st,
+                shift_id: shift.id,
+                shift_date: day.date
+              });
+            });
+          });
+        });
       }
       setAssignments(assigns);
       setSwapRequests(swp);
