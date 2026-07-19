@@ -48,7 +48,7 @@ const TIME_LABELS = generateTimeLabels(); // 13 labels: 06:00 … 06:00+1
 
 // ─── Main Component ────────────────────────────────────────────────
 export function GanttRota({ role, searchQuery = "" }) {
-  const { rota, selectedDate, setSelectedDate, loading, refreshAll } = useRota();
+  const { rota, shifts, assignments, selectedDate, setSelectedDate, loading, refreshAll } = useRota();
   const { addToast } = useToast();
   const [view, setView] = useState("24h");
   
@@ -76,13 +76,10 @@ export function GanttRota({ role, searchQuery = "" }) {
 
   const isAdmin = role === "admin";
 
-  // Extract unique wards from all days
+  // Extract unique wards from all days or from shifts
   const wards = [...new Set(
-    (rota?.days || []).flatMap(d => (d.shifts || []).map(s => s.location))
+    (shifts || []).map(s => s.location)
   )].sort();
-
-  // The day data for the selected date (24h view) or today
-  const activeDay = (rota?.days || []).find(d => d.date === selectedDate) || (rota?.days || [])[0];
 
   return (
     <div className="gantt-card">
@@ -117,26 +114,27 @@ export function GanttRota({ role, searchQuery = "" }) {
 
       {/* Content */}
       {view === "week" ? (
-        <WeekView rota={rota} selectedDate={selectedDate} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} />
+        <WeekView rota={rota} selectedDate={selectedDate} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} shifts={shifts} assignments={assignments} />
       ) : view === "3days" ? (
-        <ThreeDayView rota={rota} selectedDate={selectedDate} wards={wards} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} />
+        <ThreeDayView rota={rota} selectedDate={selectedDate} wards={wards} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} shifts={shifts} assignments={assignments} />
       ) : (
-        <TwentyFourHourView activeDay={activeDay} wards={wards} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} />
+        <TwentyFourHourView selectedDate={selectedDate} wards={wards} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} shifts={shifts} assignments={assignments} />
       )}
     </div>
   );
 }
 
 // ─── 24 Hour Gantt View ────────────────────────────────────────────
-function TwentyFourHourView({ activeDay, wards, isAdmin, refresh, searchQuery = "" }) {
+function TwentyFourHourView({ selectedDate, wards, isAdmin, refresh, searchQuery = "", shifts, assignments }) {
   // Filter wards by search query (matches ward name or any staff name)
   const q = searchQuery.toLowerCase().trim();
+  const dailyShifts = (shifts || []).filter(s => s.date === selectedDate);
   const filteredWards = q
     ? wards.filter(ward => {
         if (ward.toLowerCase().includes(q)) return true;
-        const shifts = activeDay ? activeDay.shifts.filter(s => s.location === ward) : [];
-        return shifts.some(shift =>
-          shift.staff.some(p => p.name.toLowerCase().includes(q))
+        const sfts = dailyShifts.filter(s => s.location === ward);
+        return sfts.some(shift =>
+          (assignments || []).some(a => a.shift_id === shift.id && a.name.toLowerCase().includes(q))
         );
       })
     : wards;
@@ -147,7 +145,7 @@ function TwentyFourHourView({ activeDay, wards, isAdmin, refresh, searchQuery = 
   const showNow = currentPct >= 0 && currentPct <= 100;
 
   const wardShifts = (ward) =>
-    activeDay ? activeDay.shifts.filter(s => s.location === ward) : [];
+    dailyShifts.filter(s => s.location === ward);
 
   return (
     <div className="gantt-scroll-wrapper">
@@ -212,10 +210,11 @@ function TwentyFourHourView({ activeDay, wards, isAdmin, refresh, searchQuery = 
               {wardShifts(ward).map(shift => {
                 const style = getShiftStyle(shift.start_time, shift.end_time);
                 if (!style) return null;
-                const isUnassigned = shift.staff.length === 0;
+                const shiftAssignments = (assignments || []).filter(a => a.shift_id === shift.id);
+                const isUnassigned = shiftAssignments.length === 0;
                 const label = isUnassigned
                   ? "Unassigned"
-                  : shift.staff.map(p => p.name.replace(/^(dr\.|sister|nurse)\s+/i, "")).join(", ");
+                  : shiftAssignments.map(p => p.name.replace(/^(dr\.|sister|nurse)\s+/i, "")).join(", ");
                 return (
                   <div
                     key={shift.id}
@@ -243,11 +242,13 @@ function TwentyFourHourView({ activeDay, wards, isAdmin, refresh, searchQuery = 
 }
 
 // ─── 3 Day View ────────────────────────────────────────────────────
-function ThreeDayView({ rota, selectedDate, wards, isAdmin, refresh }) {
+function ThreeDayView({ rota, selectedDate, wards, isAdmin, refresh, shifts, assignments }) {
   const daysArray = rota?.days || [];
   const idx   = daysArray.findIndex(d => d.date === selectedDate);
   const start = Math.max(0, idx);
   const days  = daysArray.slice(start, start + 3);
+  const validDates = days.map(d => d.date);
+  const threeDayShifts = (shifts || []).filter(s => validDates.includes(s.date));
 
   // Current time indicator
   const now = new Date();
@@ -257,7 +258,7 @@ function ThreeDayView({ rota, selectedDate, wards, isAdmin, refresh }) {
 
   // All wards appearing in these 3 days
   const visibleWards = [...new Set(
-    days.flatMap(d => d.shifts.map(s => s.location))
+    threeDayShifts.map(s => s.location)
   )].sort();
 
   return (
@@ -288,16 +289,17 @@ function ThreeDayView({ rota, selectedDate, wards, isAdmin, refresh }) {
           <div className="gantt-ward-cell">{ward}</div>
           <div style={{ flex: 1, display: "grid", gridTemplateColumns: `repeat(${days.length}, 1fr)` }}>
             {days.map(day => {
-              const shifts = day.shifts.filter(s => s.location === ward);
+              const dShifts = threeDayShifts.filter(s => s.date === day.date && s.location === ward);
               return (
                 <div key={day.date} style={{ position: "relative", minHeight: "54px", borderLeft: "1px solid var(--border)" }}>
-                  {shifts.map(shift => {
+                  {dShifts.map(shift => {
                     const style = getShiftStyle(shift.start_time, shift.end_time);
                     if (!style) return null;
-                    const isUnassigned = shift.staff.length === 0;
+                    const shiftAssignments = (assignments || []).filter(a => a.shift_id === shift.id);
+                    const isUnassigned = shiftAssignments.length === 0;
                     const label = isUnassigned
                       ? "Unassigned"
-                      : shift.staff.map(p => p.name.replace(/^(dr\.|sister|nurse)\s+/i, "")).join(", ");
+                      : shiftAssignments.map(p => p.name.replace(/^(dr\.|sister|nurse)\s+/i, "")).join(", ");
                     return (
                       <div
                         key={shift.id}
@@ -327,7 +329,7 @@ function ThreeDayView({ rota, selectedDate, wards, isAdmin, refresh }) {
 }
 
 // ─── Week View (Card columns) ──────────────────────────────────────
-function WeekView({ rota, selectedDate, isAdmin, refresh }) {
+function WeekView({ rota, selectedDate, isAdmin, refresh, shifts, assignments }) {
   async function toggleLocum(shiftId) {
     try { await api.toggleLocumPool(shiftId); refresh(); }
     catch (err) { alert("Could not update locum pool: " + err.message); }
@@ -337,7 +339,9 @@ function WeekView({ rota, selectedDate, isAdmin, refresh }) {
 
   return (
     <div className="week-columns">
-      {daysArray.map(day => (
+      {daysArray.map(day => {
+        const weekShifts = (shifts || []).filter(s => s.date === day.date);
+        return (
         <div
           key={day.date}
           className={`week-col ${day.date === selectedDate ? "week-col--today" : ""}`}
@@ -347,11 +351,12 @@ function WeekView({ rota, selectedDate, isAdmin, refresh }) {
             <span>{day.date.slice(5)}</span>
           </div>
           <div className="week-col-body">
-            {(day.shifts || []).length === 0 && (
+            {weekShifts.length === 0 && (
               <div className="gantt-empty">No shifts</div>
             )}
-            {(day.shifts || []).map(shift => {
-              const isUnassigned = (shift.staff || []).length === 0;
+            {weekShifts.map(shift => {
+              const shiftAssignments = (assignments || []).filter(a => a.shift_id === shift.id);
+              const isUnassigned = shiftAssignments.length === 0;
               return (
                 <div
                   key={shift.id}
@@ -377,7 +382,7 @@ function WeekView({ rota, selectedDate, isAdmin, refresh }) {
                       )}
                     </>
                   ) : (
-                    shift.staff.map(p => (
+                    shiftAssignments.map(p => (
                       <div key={p.assignment_id} className="wsb-staff">{p.name}</div>
                     ))
                   )}
@@ -386,7 +391,8 @@ function WeekView({ rota, selectedDate, isAdmin, refresh }) {
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
