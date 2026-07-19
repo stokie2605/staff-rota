@@ -27,6 +27,7 @@ class ShiftBase(SQLModel):
     location: str
     required_grade: str          # Roster slot grade requirement (matches Employee.grade)
     offered_to_locum_pool: bool = False  # Set to True to page locum agency staff
+    is_published: bool = False   # False = Draft mode, True = Live to staff
 
 
 class Shift(ShiftBase, table=True):
@@ -73,3 +74,14 @@ class AuditLog(SQLModel, table=True):
     details: str                       # Description of changes
     reason_code: Optional[str] = None  # e.g., "SICKNESS", "LEAVE_COVER", "EMERGENCY_OVERRIDE"
     override_justification: Optional[str] = None  # 1-sentence manager justification for EWTD warnings
+
+class AbsenceBase(SQLModel):
+    employee_id: int = Field(foreign_key="employee.id")
+    date: date_type
+    reason: str  # e.g., "Annual Leave", "Sickness", "Training"
+
+class Absence(AbsenceBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+class AbsenceCreate(AbsenceBase):
+    pass

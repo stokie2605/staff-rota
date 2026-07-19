@@ -1,6 +1,8 @@
 import { useMemo } from "react";
+import { useRota } from "../context/RotaContext";
 
-export function LocationPage({ shifts, assignments, onNavigate }) {
+export function LocationPage({ onNavigate }) {
+  const { shifts, assignments } = useRota();
   // Aggregate data by unique location
   const locationStats = useMemo(() => {
     const stats = {};

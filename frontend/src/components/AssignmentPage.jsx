@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { api } from "../services/api";
+import { useRota } from "../context/RotaContext";
+import { useToast } from "../context/ToastContext";
 
-export function AssignmentPage({ employees, shifts, assignments, refresh, setNotice }) {
+export function AssignmentPage() {
+  const { employees, shifts, assignments, refreshAll } = useRota();
+  const { addToast } = useToast();
   const [employeeId, setEmployeeId] = useState("");
   const [shiftId, setShiftId] = useState("");
   const [error, setError] = useState("");
@@ -34,8 +38,8 @@ export function AssignmentPage({ employees, shifts, assignments, refresh, setNot
       setWarning("");
       setShowOverride(false);
       setJustification("");
-      setNotice("Staff assigned successfully");
-      refresh();
+      addToast("Staff assigned successfully!");
+      refreshAll();
     } catch (err) {
       if (err.type === "COMPLIANCE_WARNING") {
         setWarning(err.message);
@@ -54,9 +58,9 @@ export function AssignmentPage({ employees, shifts, assignments, refresh, setNot
     if (reason === null) return;
     
     try {
-      await api.deleteAssignment(id, reason.trim() || "ROSTER_ADJUSTMENT");
-      setNotice("Assignment removed");
-      refresh();
+      await api.deleteAssignment(id);
+      addToast("Assignment removed");
+      refreshAll();
     } catch (err) {
       setError(err.message);
     }

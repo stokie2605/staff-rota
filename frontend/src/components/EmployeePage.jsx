@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { api } from "../services/api";
+import { useRota } from "../context/RotaContext";
+import { useToast } from "../context/ToastContext";
 
 const emptyEmployee = { name: "", role: "", department: "", grade: "Band 5 Nurse", is_locum: false };
 
-export function EmployeePage({ employees, refresh, setNotice }) {
+export function EmployeePage() {
+  const { employees, refreshAll } = useRota();
+  const { addToast } = useToast();
   const [form, setForm] = useState(emptyEmployee);
   const [error, setError] = useState("");
 
@@ -11,13 +15,10 @@ export function EmployeePage({ employees, refresh, setNotice }) {
     event.preventDefault();
     setError("");
     try {
-      await api.createEmployee({
-        ...form,
-        is_locum: Boolean(form.is_locum)
-      });
+      await api.createEmployee(form);
       setForm(emptyEmployee);
-      setNotice("Employee added successfully");
-      refresh();
+      addToast("Employee added successfully");
+      refreshAll();
     } catch (err) {
       setError(err.message);
     }
@@ -26,8 +27,8 @@ export function EmployeePage({ employees, refresh, setNotice }) {
   async function remove(id) {
     try {
       await api.deleteEmployee(id);
-      setNotice("Employee removed");
-      refresh();
+      addToast("Employee removed");
+      refreshAll();
     } catch (err) {
       setError(err.message);
     }

@@ -11,8 +11,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select, SQLModel
 
 from database import create_db_and_tables, get_session
-from models import AuditLog, Employee, EmployeeCreate, Shift, ShiftAssignment, ShiftCreate, ShiftSwapRequest
-from compliance import check_11hr_rest_compliance, check_48hr_weekly_compliance, check_grade_compliance
+from models import AuditLog, Employee, EmployeeCreate, Shift, ShiftAssignment, ShiftCreate, ShiftSwapRequest, Absence, AbsenceCreate
+from compliance import check_11hr_rest_compliance, check_48hr_weekly_compliance, check_grade_compliance, check_absence_compliance
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
@@ -32,7 +32,10 @@ def on_startup() -> None:
     create_db_and_tables()
 
 
-# Custom Request Schemas
+class PublishRequest(SQLModel):
+    start_date: str
+    end_date: str
+
 class AssignmentRequest(SQLModel):
     employee_id: int
     shift_id: int
@@ -165,6 +168,27 @@ def delete_employee(employee_id: int, session: SessionDep) -> dict[str, str]:
     return {"status": "deleted"}
 
 
+@app.post("/shifts/publish")
+def publish_shifts(req: PublishRequest, session: SessionDep) -> dict:
+    start_dt = parse_date(req.start_date)
+    end_dt = parse_date(req.end_date)
+    
+    shifts = session.exec(select(Shift).where(Shift.date >= start_dt, Shift.date <= end_dt)).all()
+    count = 0
+    for s in shifts:
+        if not s.is_published:
+            s.is_published = True
+            session.add(s)
+            count += 1
+            
+    if count > 0:
+        log = AuditLog(action="ROSTER_PUBLISHED", details=f"Published {count} shifts from {start_dt} to {end_dt}")
+        session.add(log)
+        session.commit()
+        
+    return {"message": f"Published {count} shifts."}
+
+
 @app.post("/shifts", response_model=Shift)
 def create_shift(shift: ShiftCreate, session: SessionDep) -> Shift:
     parse_date(shift.date)
@@ -213,6 +237,15 @@ def create_assignment(assignment: AssignmentRequest, session: SessionDep) -> dic
         raise HTTPException(status_code=404, detail="Employee not found")
     if not shift:
         raise HTTPException(status_code=404, detail="Shift not found")
+
+    # 0. Check Absence
+    absences = session.exec(select(Absence).where(Absence.employee_id == employee.id)).all()
+    absence_warning = check_absence_compliance(employee.id, shift.date, absences)
+    if absence_warning and not assignment.ignore_warnings:
+        raise HTTPException(
+            status_code=400,
+            detail={"type": "COMPLIANCE_WARNING", "message": absence_warning}
+        )
 
     # 1. Hard Rejection: Grade / Band Compliance Check
     grade_err = check_grade_compliance(employee.grade, shift.required_grade)
@@ -487,9 +520,62 @@ def approve_swap_request(swap_id: int, approval: SwapApprovalRequest, session: S
     return {"status": "swapped", "new_assignment_id": new_assignment.id}
 
 
-@app.get("/audit-logs", response_model=list[AuditLog])
-def list_audit_logs(session: SessionDep) -> list[AuditLog]:
-    return list(session.exec(select(AuditLog).order_by(AuditLog.timestamp.desc())).all())
+@app.get("/audit-logs")
+def get_audit_logs(session: SessionDep, limit: int = 50) -> list[AuditLog]:
+    return session.exec(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit)).all()
+
+
+# --- ABSENCE ROUTES ---
+
+@app.get("/absences")
+def get_absences(session: SessionDep) -> list[dict]:
+    absences = session.exec(select(Absence)).all()
+    result = []
+    for a in absences:
+        emp = session.get(Employee, a.employee_id)
+        result.append({
+            "id": a.id,
+            "employee_id": a.employee_id,
+            "employee_name": emp.name if emp else "Unknown",
+            "date": str(a.date),
+            "reason": a.reason
+        })
+    return result
+
+@app.post("/absences")
+def create_absence(absence_in: AbsenceCreate, session: SessionDep) -> Absence:
+    absence = Absence.model_validate(absence_in)
+    session.add(absence)
+    
+    emp = session.get(Employee, absence.employee_id)
+    emp_name = emp.name if emp else "Unknown"
+    
+    log = AuditLog(
+        action="ABSENCE_CREATED",
+        details=f"Recorded absence for {emp_name} on {absence.date} (Reason: {absence.reason})"
+    )
+    session.add(log)
+    session.commit()
+    session.refresh(absence)
+    return absence
+
+@app.delete("/absences/{absence_id}")
+def delete_absence(absence_id: int, session: SessionDep) -> dict:
+    absence = session.get(Absence, absence_id)
+    if not absence:
+        raise HTTPException(status_code=404, detail="Absence not found")
+        
+    emp = session.get(Employee, absence.employee_id)
+    emp_name = emp.name if emp else "Unknown"
+    
+    session.delete(absence)
+    log = AuditLog(
+        action="ABSENCE_DELETED",
+        details=f"Removed absence for {emp_name} on {absence.date}"
+    )
+    session.add(log)
+    session.commit()
+    return {"ok": True}
 
 
 @app.get("/rota/week")

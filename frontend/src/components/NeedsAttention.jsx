@@ -1,6 +1,9 @@
 import { buildAlerts } from "../utils/alerts";
 
-export function NeedsAttention({ alerts, onNavigate }) {
+import { useRota } from "../context/RotaContext";
+
+export function NeedsAttention({ onNavigate }) {
+  const { alerts } = useRota();
   if (!alerts || alerts.length === 0) {
     return (
       <div className="needs-attention">

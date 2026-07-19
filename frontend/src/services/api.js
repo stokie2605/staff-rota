@@ -45,7 +45,15 @@ export const api = {
   approveSwapRequest: (id, approval) => request(`/assignments/swap-request/${id}/approve`, { method: "POST", body: JSON.stringify(approval) }),
   
   getWeek: (date) => request(`/rota/week?date=${date}`),
-  getAuditLogs: () => request("/audit-logs")
+  getAuditLogs: () => request("/audit-logs"),
+  
+  // Absences
+  getAbsences: () => request("/absences"),
+  createAbsence: (absence) => request("/absences", { method: "POST", body: JSON.stringify(absence) }),
+  deleteAbsence: (id) => request(`/absences/${id}`, { method: "DELETE" }),
+  
+  // Publish
+  publishShifts: (startDate, endDate) => request("/shifts/publish", { method: "POST", body: JSON.stringify({ start_date: startDate, end_date: endDate }) })
 };
 
 export async function downloadRotaCsv(date) {

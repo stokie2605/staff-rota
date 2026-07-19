@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
+import { useRota } from "../context/RotaContext";
+import { useToast } from "../context/ToastContext";
 
-export function SwapPage({ employees, refresh, setNotice }) {
+export function SwapPage() {
+  const { employees, refreshAll } = useRota();
+  const { addToast } = useToast();
   const [swaps, setSwaps] = useState([]);
   const [recipients, setRecipients] = useState({}); // swapId -> selectedEmployeeId
   const [error, setError] = useState("");
@@ -62,8 +66,8 @@ export function SwapPage({ employees, refresh, setNotice }) {
       setOverrideSwapId(null);
       setOverrideRecipientId(null);
       setJustification("");
-      setNotice("Shift swap executed successfully!");
-      refresh();
+      addToast("Shift swap executed successfully!");
+      refreshAll();
       loadSwaps();
     } catch (err) {
       if (err.type === "COMPLIANCE_WARNING") {

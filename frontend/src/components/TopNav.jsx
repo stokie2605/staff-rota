@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useRota } from "../context/RotaContext";
 
 // ─── Help Modal ────────────────────────────────────────────────────
 const HELP_RULES = [
@@ -103,7 +104,8 @@ function LiveClock() {
 }
 
 // ─── Main TopNav ───────────────────────────────────────────────────
-export function TopNav({ alerts = [], onNavigate, searchQuery, setSearchQuery, role, backendOk }) {
+export function TopNav({ onNavigate, searchQuery, setSearchQuery, role }) {
+  const { alerts, backendOk } = useRota();
   const [notifOpen,   setNotifOpen]   = useState(false);
   const [helpOpen,    setHelpOpen]    = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);

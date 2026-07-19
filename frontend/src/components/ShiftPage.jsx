@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { api } from "../services/api";
+import { useRota } from "../context/RotaContext";
+import { useToast } from "../context/ToastContext";
 
 const emptyShift = { date: "", start_time: "", end_time: "", location: "", required_grade: "Band 5 Nurse" };
 
-export function ShiftPage({ shifts, refresh, setNotice }) {
+export function ShiftPage() {
+  const { shifts, refreshAll } = useRota();
+  const { addToast } = useToast();
   const [form, setForm] = useState(emptyShift);
   const [error, setError] = useState("");
 
@@ -13,8 +17,8 @@ export function ShiftPage({ shifts, refresh, setNotice }) {
     try {
       await api.createShift(form);
       setForm(emptyShift);
-      setNotice("Shift added successfully");
-      refresh();
+      addToast("Shift added successfully");
+      refreshAll();
     } catch (err) {
       setError(err.message);
     }
@@ -23,8 +27,8 @@ export function ShiftPage({ shifts, refresh, setNotice }) {
   async function remove(id) {
     try {
       await api.deleteShift(id);
-      setNotice("Shift removed");
-      refresh();
+      addToast("Shift removed");
+      refreshAll();
     } catch (err) {
       setError(err.message);
     }

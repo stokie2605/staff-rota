@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { id: "assignments", label: "Assign Staff",icon: "📋", adminOnly: true  },
   { id: "swaps",       label: "Shift Swaps", icon: "🔄", adminOnly: true  },
   { id: "locations",   label: "Locations",   icon: "📍", adminOnly: false },
+  { id: "absences",    label: "Absences",    icon: "🌴", adminOnly: true  },
   { id: "reports",     label: "Reports",     icon: "📊", adminOnly: true  },
   { id: "audit",       label: "Audit Logs",  icon: "🗂️", adminOnly: true  },
 ];

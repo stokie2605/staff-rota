@@ -1,5 +1,14 @@
 import { useState } from "react";
 import { api } from "../services/api";
+import { useRota } from "../context/RotaContext";
+import { useToast } from "../context/ToastContext";
+
+function toInputDate(d) { return d.toISOString().slice(0, 10); }
+function addDays(dateText, days) {
+  const d = new Date(`${dateText}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return toInputDate(d);
+}
 
 // ─── Helpers ───────────────────────────────────────────────────────
 const VIEW_START_HOUR = 6;           // Timeline starts at 06:00
@@ -38,8 +47,24 @@ function generateTimeLabels() {
 const TIME_LABELS = generateTimeLabels(); // 13 labels: 06:00 … 06:00+1
 
 // ─── Main Component ────────────────────────────────────────────────
-export function GanttRota({ rota, selectedDate, loading, onPrevious, onNext, onToday, refresh, role, searchQuery = "" }) {
+export function GanttRota({ role, searchQuery = "" }) {
+  const { rota, selectedDate, setSelectedDate, loading, refreshAll } = useRota();
+  const { addToast } = useToast();
   const [view, setView] = useState("24h");
+  
+  const onPrevious = () => setSelectedDate(addDays(selectedDate, -7));
+  const onNext = () => setSelectedDate(addDays(selectedDate, 7));
+  const onToday = () => setSelectedDate(toInputDate(new Date()));
+
+  async function handlePublish() {
+    try {
+      await api.publishShifts(rota.week_start, rota.week_end);
+      addToast("Roster published successfully!");
+      refreshAll();
+    } catch (err) {
+      addToast(err.message, "danger");
+    }
+  }
 
   if (loading || !rota) {
     return (
@@ -84,17 +109,19 @@ export function GanttRota({ rota, selectedDate, loading, onPrevious, onNext, onT
                 : selectedDate}
             </span>
             <button className="date-nav-btn" onClick={onNext}>›</button>
+            <button className="btn btn-outline" style={{ marginLeft: "8px", padding: "4px 8px", fontSize: "0.8rem" }} onClick={onToday}>Today</button>
+            {isAdmin && <button className="btn btn-primary" style={{ marginLeft: "16px", padding: "4px 12px", fontSize: "0.8rem" }} onClick={handlePublish}>Publish Week</button>}
           </div>
         </div>
       </div>
 
       {/* Content */}
       {view === "week" ? (
-        <WeekView rota={rota} selectedDate={selectedDate} isAdmin={isAdmin} refresh={refresh} searchQuery={searchQuery} />
+        <WeekView rota={rota} selectedDate={selectedDate} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} />
       ) : view === "3days" ? (
-        <ThreeDayView rota={rota} selectedDate={selectedDate} wards={wards} isAdmin={isAdmin} refresh={refresh} searchQuery={searchQuery} />
+        <ThreeDayView rota={rota} selectedDate={selectedDate} wards={wards} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} />
       ) : (
-        <TwentyFourHourView activeDay={activeDay} wards={wards} isAdmin={isAdmin} refresh={refresh} searchQuery={searchQuery} />
+        <TwentyFourHourView activeDay={activeDay} wards={wards} isAdmin={isAdmin} refresh={refreshAll} searchQuery={searchQuery} />
       )}
     </div>
   );
@@ -192,7 +219,7 @@ function TwentyFourHourView({ activeDay, wards, isAdmin, refresh, searchQuery = 
                 return (
                   <div
                     key={shift.id}
-                    className={`gantt-shift ${isUnassigned ? "gantt-shift--unassigned" : "gantt-shift--assigned"}`}
+                    className={`gantt-shift ${isUnassigned ? "gantt-shift--unassigned" : "gantt-shift--assigned"} ${!shift.is_published ? "draft-shift" : ""}`}
                     style={style}
                     title={`${shift.start_time}–${shift.end_time} · ${label}`}
                   >
@@ -273,7 +300,7 @@ function ThreeDayView({ rota, selectedDate, wards, isAdmin, refresh }) {
                     return (
                       <div
                         key={shift.id}
-                        className={`gantt-shift ${isUnassigned ? "gantt-shift--unassigned" : "gantt-shift--assigned"}`}
+                        className={`gantt-shift ${isUnassigned ? "gantt-shift--unassigned" : "gantt-shift--assigned"} ${!shift.is_published ? "draft-shift" : ""}`}
                         style={style}
                         title={`${shift.start_time}–${shift.end_time} · ${label}`}
                       >
@@ -325,7 +352,7 @@ function WeekView({ rota, selectedDate, isAdmin, refresh }) {
               return (
                 <div
                   key={shift.id}
-                  className={`week-shift-block ${isUnassigned ? "week-shift-block--unassigned" : ""}`}
+                  className={`week-shift-block ${isUnassigned ? "week-shift-block--unassigned" : ""} ${!shift.is_published ? "draft-shift" : ""}`}
                 >
                   <div className="wsb-time">{shift.start_time}–{shift.end_time}</div>
                   <div className="wsb-loc">{shift.location}</div>

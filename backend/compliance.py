@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from models import Shift, Employee
+from models import Shift, Employee, Absence
 
 def get_shift_datetimes(shift: Shift) -> tuple[datetime, datetime]:
     """
@@ -110,3 +110,12 @@ def check_grade_compliance(employee_grade: str, required_grade: str) -> str | No
             return None
 
     return f"Grade mismatch: Employee grade ({employee_grade}) does not meet the required grade ({required_grade}) for this shift."
+
+def check_absence_compliance(employee_id: int, shift_date: datetime.date, absences: list[Absence]) -> str | None:
+    """
+    Checks if the employee has a recorded absence on the day of the shift.
+    """
+    for absence in absences:
+        if absence.employee_id == employee_id and absence.date == shift_date:
+            return f"Employee is unavailable on {shift_date} due to: {absence.reason}"
+    return None
