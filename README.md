@@ -1,24 +1,48 @@
-# Operational Resource Scheduling & Compliance Engine
+# StaffRota — NHS Shift Planning & Compliance Console
 
-A containerized administrative utility designed to manage personnel coverage schedules, enforce strict shift-allocation constraints, and export audit-ready shift compliance data.
+A full-stack, NHS-grade staff scheduling application with a real-time compliance rules engine, locum pool management, shift swap board, and a comprehensive audit trail.
+
+**Live Demo:** [https://staff-rota-frontend.onrender.com](https://staff-rota-frontend.onrender.com)
+
+---
 
 <div align="center">
-  <img src="screenshot.png" width="750" alt="Staff Rota App Preview" />
+  <img src="docs/screenshot.jpg" width="900" alt="StaffRota NHS Compliance Dashboard — Glassmorphism Dark Mode" />
 </div>
 
 ---
 
-## Operational Focus
-* **The Problem:** Manual schedule allocation is highly susceptible to staffing conflicts, regulatory compliance violations, and fragmented operational records.
-* **The Solution:** A lightweight back-office scheduling core that validates roster data against organizational constraints (maximum working hours, skill requirements) in real time.
+## 🏥 Overview
+
+Built to handle NHS-level complexity. The scheduling engine enforces the **European Working Time Directive (EWTD)** automatically — catching 11-hour rest violations, 48-hour weekly hour caps, and clinical grade mismatches in real time before any shift assignment is saved.
+
+- **Role-Based Access:** A role switcher allows Clinical Staff to view the rota read-only, while Rota Managers have full access to assign, override, and audit.
+- **Glassmorphism UI:** A premium dark-mode interface built with frosted-glass panels, neon cyan accents, and Montserrat typography.
+- **Live Deployed:** Backend (FastAPI + SQLite) on Render. Frontend (React + Vite) on Render Static Sites.
 
 ---
 
-## Core Capabilities
-* **Constraint Validation Engine:** Programmatically blocks scheduling conflicts, shift overlaps, and double-booking errors.
-* **CSV Compliance Auditing:** Generates machine-readable, audit-compliant data exports mapping operational coverage hours for payroll and regulatory checks.
-* **Dockerized Administration:** Fully containerized architecture ensuring rapid, consistent deployment across any local server or virtualization platform.
-* **Role-Based Access Readiness:** Backed by structured API validation schemas to guarantee scheduling updates can only be executed by authorized system roles.
+## ✅ Core Features
+
+### NHS Compliance Rules Engine (`backend/compliance.py`)
+- **11-Hour Rest Rule:** Blocks consecutive shift assignments with less than 11 hours between end and start times (handles midnight-crossing shifts correctly).
+- **48-Hour Weekly Cap:** Audits a full Mon–Sun window and raises a warning if total assigned hours exceed 48.
+- **Grade Hierarchy Enforcement:** Prevents clinical grade mismatches — nurses cannot cover doctor shifts; junior doctors cannot cover consultant shifts.
+- **Override Justification:** Managers can bypass soft warnings with a mandatory reason code + 1-sentence justification, permanently logged to the audit trail.
+
+### Locum Pool Management
+- Unassigned shifts can be flagged **"Offer to Locum Pool"** with one click, broadcasting the shift to agency staff.
+- Locum staff are tagged with amber indicators on all rota views and employee directories.
+- Dashboard KPI cards track the live count of open locum offers and unfilled ward shifts.
+
+### Shift Swap Board (`SwapPage.jsx`)
+- Staff can post shift swap requests directly from the rota.
+- Managers approve swaps on a dedicated board, with grade-filtered replacement staff dropdowns.
+- Swap approvals run through the full compliance engine — a warning override is required if the replacement would violate EWTD.
+
+### Compliance Audit Logs
+- Every assignment, deletion, override, and swap is permanently logged.
+- Audit entries display the **action type**, **reason code** (e.g. `EMERGENCY_OVERRIDE`, `SICKNESS_COVER`), and the manager's **override justification string**.
 
 ---
 
@@ -30,41 +54,14 @@ Docker Compose
      ├── backend (python:3.12-slim)
      │     │  FastAPI + SQLModel + Uvicorn
      │     │  Port: 8000
+     │     ├── compliance.py   ← NHS EWTD rules engine
+     │     ├── seed.py         ← NHS demo data seeder
      │     └── SQLite DB (staffrota-data volume)
      │
      └── frontend (node:22-alpine)
-           │  React + Vite dev server
+           │  React + Vite
            └── Port: 3000
 ```
-
----
-
-## ⚙️ Core Business Logic
-
-### Double-Booking Prevention
-A database-level `UniqueConstraint` on `(employee_id, shift_date)` ensures a single employee can only be assigned to one shift per day. Attempting a second assignment returns **409 Conflict**:
-
-```python
-class ShiftAssignment(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    employee_id: int = Field(foreign_key="employee.id")
-    shift_id:    int = Field(foreign_key="shift.id")
-    shift_date:  str = Field(index=True)   # denormalised from Shift.date
-    shift_slot:  str                       # e.g. "08:00-16:00"
-
-    __table_args__ = (
-        UniqueConstraint("employee_id", "shift_date", name="uix_employee_shift_date"),
-    )
-```
-
-### Weekly Rota View (`GET /rota/week?date=YYYY-MM-DD`)
-Calculates Monday–Sunday bounds for any date and returns a 7-day structured JSON response with all shifts and assigned staff per day — consumed by the frontend calendar grid.
-
-### CSV Export (`GET /rota/export?date=YYYY-MM-DD`)
-Streams a downloadable `.csv` file with columns `Date, Day, Start, End, Location, Employee, Role, Department`. Unassigned shifts are included as blank employee rows.
-
-### Compliance Audit Log
-All destructive admin actions (`EMPLOYEE_DELETED`, `ASSIGNMENT_DELETED`) are logged to the `audit_logs` table with a timestamp, actor, and description for compliance traceability.
 
 ---
 
@@ -73,15 +70,20 @@ All destructive admin actions (`EMPLOYEE_DELETED`, `ASSIGNMENT_DELETED`) are log
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/health` | Service health check |
+| `GET` | `/rota/seed` | Seed NHS demo data via HTTP |
 | `POST` | `/employees` | Create employee |
 | `GET` | `/employees` | List all employees |
 | `DELETE` | `/employees/{id}` | Delete employee + cascade + audit log |
 | `POST` | `/shifts` | Create shift |
 | `GET` | `/shifts` | List all shifts |
-| `DELETE` | `/shifts/{id}` | Delete shift + cascade assignments |
-| `POST` | `/assignments` | Assign employee to shift (409 on conflict) |
+| `DELETE` | `/shifts/{id}` | Delete shift |
+| `POST` | `/shifts/{id}/locum-pool` | Toggle locum pool offer |
+| `POST` | `/assignments` | Assign employee (runs compliance check) |
 | `GET` | `/assignments` | List all assignments |
 | `DELETE` | `/assignments/{id}` | Remove assignment + audit log |
+| `GET` | `/assignments/swap-requests` | List pending swap requests |
+| `POST` | `/assignments/swap-request` | Post a swap request |
+| `POST` | `/assignments/swap-request/{id}/approve` | Approve a swap |
 | `GET` | `/audit-logs` | All compliance audit entries |
 | `GET` | `/rota/week?date=` | 7-day structured rota view |
 | `GET` | `/rota/export?date=` | Download weekly CSV rota |
@@ -91,11 +93,12 @@ All destructive admin actions (`EMPLOYEE_DELETED`, `ASSIGNMENT_DELETED`) are log
 ## 🗄️ Data Models
 
 ```text
-Employee       id, name, role, department
-Shift          id, date, start_time, end_time, location
-ShiftAssignment id, employee_id (FK), shift_id (FK), shift_date, shift_slot
-               UNIQUE CONSTRAINT (employee_id, shift_date)
-AuditLog       id, timestamp, action, performed_by, details
+Employee          id, name, role, department, grade, is_locum
+Shift             id, date, start_time, end_time, location, required_grade, offered_to_locum_pool
+ShiftAssignment   id, employee_id (FK), shift_id (FK), shift_date, shift_slot
+                  UNIQUE CONSTRAINT (employee_id, shift_date)
+ShiftSwapRequest  id, requesting_employee_id, shift_id, target_employee_id, status
+AuditLog          id, timestamp, action, performed_by, details, reason_code, override_justification
 ```
 
 ---
@@ -103,29 +106,64 @@ AuditLog       id, timestamp, action, performed_by, details
 ## 🛠️ Local Setup (Docker — Recommended)
 
 ```bash
+git clone https://github.com/stokie2605/staff-rota.git
+cd staff-rota
 docker-compose up --build
 ```
+
 - **Frontend:** http://localhost:3000
 - **Backend API docs:** http://localhost:8000/docs
 
-### Run Backend Tests Locally
+### Run Without Docker
+
+```bash
+# Backend
+cd backend
+pip install -r requirements.txt
+python seed.py
+uvicorn main:app --reload --port 8000
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+### Run Test Suite
+
 ```bash
 cd backend
-pip install -r requirements.txt -r requirements-dev.txt
 pytest -vv
 ```
 
-### Seed Demo Data
-```bash
-cd backend
-python seed.py
-```
-Populates 5 employees, 5 shifts across the current week, and 3 pre-made assignments.
+**Test Results (11/11 passing):**
+- `test_check_11hr_rest_compliance` ✅
+- `test_check_48hr_weekly_compliance` ✅
+- `test_check_grade_compliance` ✅
+- `test_create_employee` ✅
+- `test_create_shift_and_conflict` ✅
+- `test_export_rota_csv` ✅
+- `test_assignment_grade_mismatch` ✅
+- `test_assignment_compliance_warning_and_override` ✅
+- `test_shift_swap_workflow` ✅
 
 ---
 
-## Recent Architectural Upgrades
-* **Operational Restructuring:** Standardized repository file hierarchies by separating core automation logic, helper scripts, and test files.
-* **Security Hardening:** Swapped legacy credential configs for environment variables and secure token validation policies.
-* **Database Schema Upgrades:** Refactored primitive database types into native data structures for robust ORM and transaction handling.
-* **Systems Maintenance:** Eradicated legacy diagnostic scripts, optimized loops, and established static analysis scanning to ensure code hygiene.
+## NHS Grade / Band Mapping
+
+| Category | Grades Supported |
+|---|---|
+| Nursing Staff | Band 5 Nurse (Staff Nurse), Band 6 Nurse (Senior/Sister) |
+| Medical Staff | Junior Doctor, Registrar, Consultant |
+| Agency / Locum | Any grade, flagged with amber indicator |
+
+---
+
+## Recent Upgrades
+
+- **NHS EWTD Compliance Engine:** 11-hour rest, 48-hour weekly cap, and grade hierarchy validation.
+- **Locum Pool Management:** One-click locum broadcasts with live KPI tracking.
+- **Shift Swap Board:** Full swap request and approval workflow with compliance checks.
+- **Role-Based Access:** Clinical Staff (read-only) and Rota Manager (full control) modes.
+- **Glassmorphism Dashboard:** Complete dark-mode UI redesign with frosted glass panels, neon accents, and Montserrat typography.
+- **Live Deployment:** Fully deployed on Render — frontend static site + Dockerised backend.
