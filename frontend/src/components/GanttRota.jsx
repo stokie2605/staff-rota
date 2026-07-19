@@ -10,7 +10,7 @@ function addDays(dateText, days) {
 
 // ─── Main Wrapper ──────────────────────────────────────────────────
 export function GanttRota() {
-  const { rota, shifts, assignments, selectedDate, setSelectedDate, loading, getLabel } = useRota();
+  const { rota, shifts, assignments, selectedDate, setSelectedDate, loading, getLabel, locations } = useRota();
   const [view, setView] = useState("week_grid");
   
   const onPrevious = () => setSelectedDate(addDays(selectedDate, view === 'monthly_matrix' ? -30 : -7));
@@ -24,9 +24,6 @@ export function GanttRota() {
       </div>
     );
   }
-
-  // Extract unique locations from all shifts
-  const wards = [...new Set((shifts || []).map(s => s.location))].sort();
 
   return (
     <div className="gantt-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -66,8 +63,8 @@ export function GanttRota() {
 
       {/* Canvas Area */}
       <div style={{ flex: 1, background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden" }}>
-        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={shifts} assignments={assignments} wards={wards} getLabel={getLabel} />}
-        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={shifts} assignments={assignments} wards={wards} getLabel={getLabel} />}
+        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={shifts} assignments={assignments} locations={locations} getLabel={getLabel} />}
+        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={shifts} assignments={assignments} locations={locations} getLabel={getLabel} />}
         {view === "monthly_matrix" && <MonthlyMatrix selectedDate={selectedDate} shifts={shifts} assignments={assignments} />}
       </div>
     </div>
@@ -75,7 +72,7 @@ export function GanttRota() {
 }
 
 // ─── 1. Weekly Mode Grid ───────────────────────────────────────────
-function WeeklyGrid({ rota, shifts, assignments, wards, getLabel }) {
+function WeeklyGrid({ rota, shifts, assignments, locations, getLabel }) {
   const days = rota?.days || [];
   
   return (
@@ -95,7 +92,7 @@ function WeeklyGrid({ rota, shifts, assignments, wards, getLabel }) {
           </tr>
         </thead>
         <tbody>
-          {wards.map(ward => (
+          {(locations || []).map(ward => (
             <tr key={ward}>
               <td style={{ position: "sticky", left: 0, zIndex: 5, background: "var(--surface-2)", borderBottom: "1px solid var(--border)", borderRight: "1px solid var(--border)", padding: "16px", fontWeight: "bold", color: "var(--text)", minWidth: "180px" }}>
                 {ward}
@@ -157,7 +154,7 @@ function WeeklyGrid({ rota, shifts, assignments, wards, getLabel }) {
 }
 
 // ─── 2. Daily Vertical Calendar Mode ───────────────────────────────
-function DailyVertical({ selectedDate, shifts, assignments, wards, getLabel }) {
+function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel }) {
   const dailyShifts = (shifts || []).filter(s => s.date === selectedDate);
   const START_HR = 6;
   const END_HR = 24;
@@ -184,7 +181,7 @@ function DailyVertical({ selectedDate, shifts, assignments, wards, getLabel }) {
 
       {/* Location Columns */}
       <div style={{ display: "flex", flex: 1, minWidth: "max-content", position: "relative" }}>
-        {wards.map(ward => {
+        {(locations || []).map(ward => {
           const wShifts = dailyShifts.filter(s => s.location === ward);
           return (
             <div key={ward} style={{ flex: 1, minWidth: "200px", borderRight: "1px solid var(--border)" }}>
@@ -280,7 +277,7 @@ function MonthlyMatrix({ selectedDate, shifts, assignments }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridAutoRows: "1fr", flex: 1, background: "var(--border)", gap: "1px" }}>
         {calendarCells.map((d, idx) => {
           const isCurrentMonth = d.getMonth() === month;
-          const dateStr = d.toISOString().slice(0,10);
+          const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
           
           const dShifts = (shifts || []).filter(s => s.date === dateStr);
           let unassignedCount = 0;

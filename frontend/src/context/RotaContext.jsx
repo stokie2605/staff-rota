@@ -46,33 +46,26 @@ export function RotaProvider({ children }) {
 
   const loadData = useCallback(async () => {
     try {
-      setLoading(true);
-      const [emp, shf, rta, swp, abs] = await Promise.all([
+      const [emp, shf, rta, swp, abs, rawAssigns] = await Promise.all([
         api.getEmployees(),
         api.getShifts(),
         api.getWeek(selectedDate),
         api.getSwapRequests(),
-        api.getAbsences() // Note: Need to add this to api.js
+        api.getAbsences(),
+        api.getAssignments()
       ]);
       setEmployees(emp);
       setShifts(shf);
       setRota(rta);
-      
-      // Extract assignments from rota structure for easier list rendering
-      const assigns = [];
-      if (rta && rta.days) {
-        rta.days.forEach(day => {
-          (day.shifts || []).forEach(shift => {
-            (shift.staff || []).forEach(st => {
-              assigns.push({
-                ...st,
-                shift_id: shift.id,
-                shift_date: day.date
-              });
-            });
-          });
-        });
-      }
+      const assigns = rawAssigns.map(a => {
+        const employee = emp.find(e => e.id === a.employee_id) || {};
+        return {
+          ...a,
+          name: employee.name,
+          role: employee.role,
+          grade: employee.grade
+        };
+      });
       setAssignments(assigns);
       setSwapRequests(swp);
       setAbsences(abs);
@@ -93,6 +86,10 @@ export function RotaProvider({ children }) {
     return buildAlerts(rota, swapRequests, employees, selectedDate);
   }, [rota, swapRequests, employees, selectedDate]);
 
+  const locations = useMemo(() => {
+    return [...new Set((shifts || []).map(s => s.location))].sort();
+  }, [shifts]);
+
   const value = {
     employees,
     shifts,
@@ -101,6 +98,7 @@ export function RotaProvider({ children }) {
     swapRequests,
     absences,
     alerts,
+    locations,
     loading,
     backendOk,
     selectedDate,
