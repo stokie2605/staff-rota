@@ -159,21 +159,24 @@ export function AssignmentPage() {
             </tr>
           </thead>
           <tbody>
-            {assignments.map((assignment) => (
-              <tr key={assignment.id}>
+            {assignments.map((assignment) => {
+              const shift = shifts.find(s => s.id === assignment.shift_id);
+              if (!shift) return null;
+              return (
+              <tr key={assignment.assignment_id}>
                 <td>
-                  <strong>{assignment.employee_name}</strong>
-                  {assignment.employee_role && <div style={{ fontSize: "0.8rem", color: "#666" }}>{assignment.employee_role}</div>}
+                  <strong>{assignment.name}</strong>
+                  {assignment.role && <div style={{ fontSize: "0.8rem", color: "#666" }}>{assignment.role}</div>}
                 </td>
-                <td><span className="pill grade-pill">{assignment.employee_grade}</span></td>
+                <td><span className="pill grade-pill">{assignment.grade}</span></td>
                 <td>
-                  {assignment.shift.date} {assignment.shift.start_time}-{assignment.shift.end_time}
-                  <div style={{ fontSize: "0.8rem", color: "#666" }}>{assignment.shift.location}</div>
+                  {shift.date} {shift.start_time}-{shift.end_time}
+                  <div style={{ fontSize: "0.8rem", color: "#666" }}>{shift.location}</div>
                 </td>
                 <td><span className="pill">{assignment.department}</span></td>
-                <td><button className="btn btn-outline" style={{ color: "var(--critical)", borderColor: "var(--critical-bg)" }} onClick={() => remove(assignment.id)}>Remove</button></td>
+                <td><button className="btn btn-outline" style={{ color: "var(--critical)", borderColor: "var(--critical-bg)" }} onClick={() => remove(assignment.assignment_id)}>Remove</button></td>
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
       </div>

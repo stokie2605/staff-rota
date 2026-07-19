@@ -16,6 +16,7 @@ import { SwapPage }       from "./components/SwapPage";
 import { AuditPage }      from "./components/AuditPage";
 import { LocationPage }   from "./components/LocationPage";
 import { AbsencePage }    from "./components/AbsencePage";
+import { ReportsPage }    from "./components/ReportsPage";
 
 function AppContent() {
   const [activeView, setActiveView]  = useState("dashboard");
@@ -106,6 +107,7 @@ function AppContent() {
           {activeView === "swaps" && isAdmin && <SwapPage />}
           {activeView === "locations" && <LocationPage onNavigate={setActiveView} />}
           {activeView === "absences" && isAdmin && <AbsencePage />}
+          {activeView === "reports" && isAdmin && <ReportsPage />}
           {activeView === "audit" && isAdmin && <AuditPage />}
         </main>
       </div>
