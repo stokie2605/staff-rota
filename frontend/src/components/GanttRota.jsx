@@ -11,7 +11,7 @@ function addDays(dateText, days) {
 
 // ─── Main Wrapper ──────────────────────────────────────────────────
 export function GanttRota() {
-  const { rota, shifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations } = useRota();
+  const { rota, shifts, setShifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations } = useRota();
   const [view, setView] = useState("week_grid");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
@@ -19,6 +19,55 @@ export function GanttRota() {
   const openModal = (data = null) => {
     setModalData(data);
     setIsModalOpen(true);
+  };
+
+  const handleDropShift = (shiftId, newDate, newLocation) => {
+    const sId = parseInt(shiftId, 10);
+    const newShifts = [...(shifts || [])];
+    const index = newShifts.findIndex(s => s.id === sId);
+    if (index >= 0) {
+      newShifts[index] = { ...newShifts[index], date: newDate, location: newLocation };
+      setShifts(newShifts);
+    }
+  };
+
+  const handleDropShiftTime = (shiftId, newLocation, yOffset) => {
+    const sId = parseInt(shiftId, 10);
+    const newShifts = [...(shifts || [])];
+    const index = newShifts.findIndex(s => s.id === sId);
+    if (index >= 0) {
+      const shift = newShifts[index];
+      const START_HR = 6;
+      const HOURS = 18;
+      
+      const fraction = yOffset / 1200;
+      let totalStartMins = START_HR * 60 + fraction * HOURS * 60;
+      
+      // Snap to nearest 15 mins
+      totalStartMins = Math.round(totalStartMins / 15) * 15;
+      
+      const [sh, sm] = shift.start_time.split(":").map(Number);
+      let [eh, em] = shift.end_time.split(":").map(Number);
+      if (eh <= sh) eh += 24;
+      const durationMins = (eh * 60 + em) - (sh * 60 + sm);
+      
+      const newTotalEndMins = totalStartMins + durationMins;
+      
+      const newSh = Math.floor(totalStartMins / 60) % 24;
+      const newSm = totalStartMins % 60;
+      const newEh = Math.floor(newTotalEndMins / 60) % 24;
+      const newEm = newTotalEndMins % 60;
+      
+      const f = (num) => String(num).padStart(2, '0');
+      
+      newShifts[index] = { 
+        ...shift, 
+        location: newLocation, 
+        start_time: `${f(newSh)}:${f(newSm)}`,
+        end_time: `${f(newEh)}:${f(newEm)}`
+      };
+      setShifts(newShifts);
+    }
   };
   
   const onPrevious = () => setSelectedDate(addDays(selectedDate, view === 'monthly_matrix' ? -30 : -7));
@@ -113,8 +162,8 @@ export function GanttRota() {
 
       {/* Canvas Area */}
       <div style={{ flex: 1, background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} />}
-        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} />}
+        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} onDropShift={handleDropShift} />}
+        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} onDropShiftTime={handleDropShiftTime} />}
         {view === "monthly_matrix" && <MonthlyMatrix selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} />}
       </div>
       
@@ -124,7 +173,7 @@ export function GanttRota() {
 }
 
 // ─── 1. Weekly Mode Grid ───────────────────────────────────────────
-function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModal }) {
+function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModal, onDropShift }) {
   const days = rota?.days || [];
   
   return (
@@ -156,6 +205,12 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModa
                     key={d.date} 
                     style={{ borderBottom: "1px solid var(--border)", borderRight: "1px solid var(--border)", padding: "12px", verticalAlign: "top", background: "var(--surface)", cursor: dayShifts.length === 0 ? "pointer" : "default" }}
                     onClick={() => { if (dayShifts.length === 0 && onOpenModal) onOpenModal({ date: d.date, location: ward }); }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const shiftId = e.dataTransfer.getData("shift_id");
+                      if (shiftId && onDropShift) onDropShift(shiftId, d.date, ward);
+                    }}
                   >
                     {dayShifts.length === 0 && (
                       <div style={{ border: "2px dashed var(--border)", padding: "20px", textAlign: "center", borderRadius: "8px", color: "var(--text-faint)" }}>
@@ -167,6 +222,8 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModa
                       const isUnassigned = assigns.length === 0;
                       return (
                         <div key={shift.id} 
+                          draggable={true}
+                          onDragStart={(e) => e.dataTransfer.setData("shift_id", shift.id)}
                           onClick={(e) => {
                             if (isUnassigned && onOpenModal) {
                               e.stopPropagation();
@@ -218,7 +275,7 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModa
 }
 
 // ─── 2. Daily Vertical Calendar Mode ───────────────────────────────
-function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel, onOpenModal }) {
+function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel, onOpenModal, onDropShiftTime }) {
   const dailyShifts = (shifts || []).filter(s => s.date === selectedDate);
   const START_HR = 6;
   const END_HR = 24;
@@ -259,6 +316,14 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel,
                     onOpenModal({ date: selectedDate, location: ward });
                   }
                 }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const shiftId = e.dataTransfer.getData("shift_id");
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const y = e.clientY - rect.top;
+                  if (shiftId && onDropShiftTime) onDropShiftTime(shiftId, ward, y);
+                }}
               >
                 {/* Horizontal Gridlines */}
                 {Array.from({length: HOURS}).map((_, i) => (
@@ -285,6 +350,8 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel,
                   
                   return (
                     <div key={shift.id} 
+                      draggable={true}
+                      onDragStart={(e) => e.dataTransfer.setData("shift_id", shift.id)}
                       onClick={(e) => {
                         if (isUnassigned && onOpenModal) {
                           e.stopPropagation();
