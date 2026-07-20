@@ -33,6 +33,7 @@ export const api = {
   deleteEmployee: (id) => request(`/employees/${id}`, { method: "DELETE" }),
   getShifts: () => request("/shifts"),
   createShift: (shift) => request("/shifts", { method: "POST", body: JSON.stringify(shift) }),
+  updateShift: (id, shift) => request(`/shifts/${id}`, { method: "PUT", body: JSON.stringify(shift) }),
   deleteShift: (id) => request(`/shifts/${id}`, { method: "DELETE" }),
   toggleLocumPool: (id) => request(`/shifts/${id}/locum-pool`, { method: "POST" }),
   getAssignments: () => request("/assignments"),

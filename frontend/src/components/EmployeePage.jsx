@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useRota } from "../context/RotaContext";
+import { useToast } from "../context/ToastContext";
+import { api } from "../services/api";
 
 export function EmployeePage() {
   const { employees, setEmployees, shifts, assignments, getLabel } = useRota();
@@ -107,6 +109,7 @@ export function EmployeePage() {
 
 function AddEmployeeModal({ isOpen, onClose }) {
   const { employees, setEmployees, getLabel } = useRota();
+  const { addToast } = useToast();
   
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -116,18 +119,37 @@ function AddEmployeeModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newEmp = {
-      id: Date.now(),
+    const payload = {
       name,
-      role,
+      grade: role, // map role to grade for backend
       contracted_hours: parseFloat(contractedHours) || 0,
-      preferred_shifts: preferredShifts,
       is_locum: isLocum
     };
     
-    setEmployees([...employees, newEmp]);
+    try {
+      const result = await api.createEmployee(payload);
+      setEmployees([...employees, {
+        id: result.id || Date.now(),
+        name,
+        role,
+        contracted_hours: parseFloat(contractedHours) || 0,
+        preferred_shifts: preferredShifts,
+        is_locum: isLocum
+      }]);
+    } catch (err) {
+      // Offline fallback
+      setEmployees([...employees, {
+        id: Date.now(),
+        name,
+        role,
+        contracted_hours: parseFloat(contractedHours) || 0,
+        preferred_shifts: preferredShifts,
+        is_locum: isLocum
+      }]);
+      addToast(`Offline Mode: ${getLabel("staff")} saved locally`, "warning");
+    }
     
     // reset
     setName("");

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useRota } from "../context/RotaContext";
+import { useToast } from "../context/ToastContext";
+import { api } from "../services/api";
 
 export function AbsencePage() {
   const { absences, setAbsences, employees, assignments, shifts } = useRota();
@@ -125,6 +127,7 @@ export function AbsencePage() {
 
 function LogAbsenceModal({ isOpen, onClose }) {
   const { absences, setAbsences, employees } = useRota();
+  const { addToast } = useToast();
   
   const [employeeId, setEmployeeId] = useState("");
   const [reason, setReason] = useState("Annual Leave");
@@ -134,23 +137,62 @@ function LogAbsenceModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const emp = employees.find(e => String(e.id) === String(employeeId));
     if (!emp) return;
 
-    const newAbsence = {
-      id: Date.now(),
+    const payload = {
       employee_id: emp.id,
-      employee_name: emp.name,
-      reason,
-      start_date: startDate,
-      end_date: endDate,
-      status: "Approved", // Auto-approve for demo
-      notes
+      date: startDate, // Send start date for API for now, we'd loop if multiple days
+      reason
     };
     
-    setAbsences([...absences, newAbsence]);
+    try {
+      // Basic implementation for saving an absence
+      // The old API looped through days to create a record per day. 
+      // For now we'll do the same to match the old api.js
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      let current = new Date(start);
+      while (current <= end) {
+        const dateStr = current.toISOString().slice(0, 10);
+        await api.createAbsence({
+          employee_id: Number(emp.id),
+          date: dateStr,
+          reason
+        });
+        current.setDate(current.getDate() + 1);
+      }
+      
+      const newAbsence = {
+        id: Date.now(),
+        employee_id: emp.id,
+        employee_name: emp.name,
+        reason,
+        start_date: startDate,
+        end_date: endDate,
+        status: "Approved",
+        notes
+      };
+      setAbsences([...absences, newAbsence]);
+      
+    } catch (err) {
+      // Offline fallback
+      const newAbsence = {
+        id: Date.now(),
+        employee_id: emp.id,
+        employee_name: emp.name,
+        reason,
+        start_date: startDate,
+        end_date: endDate,
+        status: "Approved",
+        notes
+      };
+      setAbsences([...absences, newAbsence]);
+      addToast("Offline Mode: Absence saved locally", "warning");
+    }
     
     // reset
     setEmployeeId("");

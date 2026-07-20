@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useRota } from "../context/RotaContext";
+import { useToast } from "../context/ToastContext";
+import { api } from "../services/api";
 
 export function ShiftModal({ isOpen, onClose, initialData }) {
   const { shifts, setShifts, assignments, setAssignments, getDefaultLocations, getLabel, employees } = useRota();
+  const { addToast } = useToast();
 
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
@@ -38,36 +41,69 @@ export function ShiftModal({ isOpen, onClose, initialData }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     let shiftId = initialData?.id;
     let newShifts = [...shifts];
     let newAssignments = [...assignments];
+    let actualShiftId = shiftId;
+    let isOffline = false;
 
     if (shiftId) {
       // Edit existing
       const index = newShifts.findIndex(s => s.id === shiftId);
+      const updatedShift = { ...newShifts[index], date, start_time: startTime, end_time: endTime, location, required_grade: role };
       if (index >= 0) {
-        newShifts[index] = { ...newShifts[index], date, start_time: startTime, end_time: endTime, location, required_grade: role };
+        newShifts[index] = updatedShift;
+      }
+      try {
+        await api.updateShift(shiftId, updatedShift);
+      } catch (err) {
+        isOffline = true;
+        addToast("Offline Mode: Shift update saved locally", "warning");
       }
     } else {
       // Create new
-      shiftId = Date.now(); // mock ID
-      newShifts.push({ id: shiftId, date, start_time: startTime, end_time: endTime, location, required_grade: role, is_published: false });
+      const payload = { date, start_time: startTime, end_time: endTime, location, required_grade: role, is_published: false };
+      try {
+        const result = await api.createShift(payload);
+        actualShiftId = result.id || Date.now();
+        newShifts.push({ ...payload, id: actualShiftId });
+      } catch (err) {
+        isOffline = true;
+        actualShiftId = Date.now(); // mock ID
+        newShifts.push({ ...payload, id: actualShiftId });
+        addToast("Offline Mode: New shift saved locally", "warning");
+      }
     }
 
     // Handle assignments
     if (assignee && assignee !== "") {
-      const assignIndex = newAssignments.findIndex(a => a.shift_id === shiftId);
+      const assignIndex = newAssignments.findIndex(a => a.shift_id === actualShiftId);
+      const emp = employees.find(e => e.name === assignee);
+      const empId = emp ? emp.id : null;
+
       if (assignIndex >= 0) {
         newAssignments[assignIndex] = { ...newAssignments[assignIndex], name: assignee };
+        // Could call updateAssignment here if API supports it
       } else {
-        newAssignments.push({ assignment_id: Date.now(), shift_id: shiftId, name: assignee, role: role });
+        const newAssign = { shift_id: actualShiftId, employee_id: empId, name: assignee, role: role };
+        try {
+          if (!isOffline) {
+             const result = await api.createAssignment(newAssign);
+             newAssignments.push({ ...newAssign, assignment_id: result.id || Date.now() });
+          } else {
+             newAssignments.push({ ...newAssign, assignment_id: Date.now() });
+          }
+        } catch (err) {
+          newAssignments.push({ ...newAssign, assignment_id: Date.now() });
+          if (!isOffline) addToast("Offline Mode: Assignment saved locally", "warning");
+        }
       }
     } else {
       // unassign
-      newAssignments = newAssignments.filter(a => a.shift_id !== shiftId);
+      newAssignments = newAssignments.filter(a => a.shift_id !== actualShiftId);
     }
 
     setShifts(newShifts);

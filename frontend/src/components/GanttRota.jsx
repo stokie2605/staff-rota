@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useRota } from "../context/RotaContext";
 import { ShiftModal } from "./ShiftModal";
+import { api } from "../services/api";
+import { useToast } from "../context/ToastContext";
 
 function toInputDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 function addDays(dateText, days) {
@@ -12,6 +14,7 @@ function addDays(dateText, days) {
 // ─── Main Wrapper ──────────────────────────────────────────────────
 export function GanttRota() {
   const { rota, shifts, setShifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations, absences, industryTemplate } = useRota();
+  const { addToast } = useToast();
   const [view, setView] = useState("week_grid");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
@@ -21,17 +24,24 @@ export function GanttRota() {
     setIsModalOpen(true);
   };
 
-  const handleDropShift = (shiftId, newDate, newLocation) => {
+  const handleDropShift = async (shiftId, newDate, newLocation) => {
     const sId = parseInt(shiftId, 10);
     const newShifts = [...(shifts || [])];
     const index = newShifts.findIndex(s => s.id === sId);
     if (index >= 0) {
-      newShifts[index] = { ...newShifts[index], date: newDate, location: newLocation };
+      const updatedShift = { ...newShifts[index], date: newDate, location: newLocation };
+      newShifts[index] = updatedShift;
       setShifts(newShifts);
+      
+      try {
+        await api.updateShift(sId, updatedShift);
+      } catch (err) {
+        addToast("Offline Mode: Shift update saved locally", "warning");
+      }
     }
   };
 
-  const handleDropShiftTime = (shiftId, newLocation, yOffset) => {
+  const handleDropShiftTime = async (shiftId, newLocation, yOffset) => {
     const sId = parseInt(shiftId, 10);
     const newShifts = [...(shifts || [])];
     const index = newShifts.findIndex(s => s.id === sId);
@@ -60,13 +70,20 @@ export function GanttRota() {
       
       const f = (num) => String(num).padStart(2, '0');
       
-      newShifts[index] = { 
+      const updatedShift = { 
         ...shift, 
         location: newLocation, 
         start_time: `${f(newSh)}:${f(newSm)}`,
         end_time: `${f(newEh)}:${f(newEm)}`
       };
+      newShifts[index] = updatedShift;
       setShifts(newShifts);
+      
+      try {
+        await api.updateShift(sId, updatedShift);
+      } catch (err) {
+        addToast("Offline Mode: Shift time update saved locally", "warning");
+      }
     }
   };
 
