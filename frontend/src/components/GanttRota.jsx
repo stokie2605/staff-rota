@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRota } from "../context/RotaContext";
 
-function toInputDate(d) { return d.toISOString().slice(0, 10); }
+function toInputDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 function addDays(dateText, days) {
   const d = new Date(`${dateText}T12:00:00`);
   d.setDate(d.getDate() + days);
@@ -23,6 +23,45 @@ export function GanttRota() {
         <div className="gantt-loading">Loading Calendar Canvas...</div>
       </div>
     );
+  }
+
+  let renderShifts = shifts || [];
+  let renderAssigns = assignments || [];
+  let renderLocations = locations || [];
+
+  // Inject hardcoded SaaS Demo data if backend is empty
+  if (renderShifts.length === 0) {
+    const todayStr = toInputDate(new Date());
+    renderLocations = ["Chair 1", "Chair 2", "Chair 3", "Hygiene A", "Consultation B"];
+    renderShifts = [
+      { id: 101, date: todayStr, start_time: "08:00", end_time: "12:00", location: "Chair 1", required_grade: "Dentist", is_published: true },
+      { id: 102, date: todayStr, start_time: "13:00", end_time: "17:00", location: "Chair 1", required_grade: "Dentist", is_published: true },
+      { id: 103, date: todayStr, start_time: "09:00", end_time: "15:00", location: "Chair 2", required_grade: "Orthodontist", is_published: true },
+      { id: 104, date: todayStr, start_time: "08:30", end_time: "16:30", location: "Hygiene A", required_grade: "Hygienist", is_published: true },
+      { id: 105, date: addDays(todayStr, 1), start_time: "10:00", end_time: "18:00", location: "Chair 3", required_grade: "Dentist", is_published: true },
+      { id: 106, date: addDays(todayStr, 1), start_time: "09:00", end_time: "14:00", location: "Consultation B", required_grade: "Nurse", is_published: true },
+      { id: 107, date: addDays(todayStr, 2), start_time: "07:00", end_time: "19:00", location: "Chair 1", required_grade: "Dentist", is_published: true },
+      { id: 108, date: addDays(todayStr, 2), start_time: "08:00", end_time: "16:00", location: "Hygiene A", required_grade: "Hygienist", is_published: true },
+      { id: 109, date: addDays(todayStr, -1), start_time: "08:00", end_time: "18:00", location: "Chair 2", required_grade: "Dentist", is_published: true },
+      { id: 110, date: addDays(todayStr, 3), start_time: "09:00", end_time: "17:00", location: "Chair 3", required_grade: "Dentist", is_published: false },
+      { id: 111, date: addDays(todayStr, 5), start_time: "10:00", end_time: "16:00", location: "Consultation B", required_grade: "Nurse", is_published: true },
+      { id: 112, date: addDays(todayStr, 10), start_time: "08:00", end_time: "14:00", location: "Chair 1", required_grade: "Dentist", is_published: true },
+      { id: 113, date: addDays(todayStr, 15), start_time: "09:00", end_time: "17:00", location: "Chair 2", required_grade: "Orthodontist", is_published: true },
+      { id: 114, date: addDays(todayStr, -5), start_time: "08:00", end_time: "16:00", location: "Hygiene A", required_grade: "Hygienist", is_published: true },
+      { id: 115, date: addDays(todayStr, 20), start_time: "10:00", end_time: "18:00", location: "Consultation B", required_grade: "Nurse", is_published: true },
+    ];
+    renderAssigns = [
+      { shift_id: 101, name: "Dr. Sarah Jenkins", role: "Dentist" },
+      { shift_id: 102, name: "Dr. Sarah Jenkins", role: "Dentist" },
+      { shift_id: 103, name: "Dr. Ahmed Khan", role: "Orthodontist" },
+      { shift_id: 104, name: "Chloe Evans", role: "Hygienist" },
+      { shift_id: 105, name: "Dr. Emily Chen", role: "Dentist" },
+      { shift_id: 106, name: "Nurse Thompson", role: "Nurse" },
+      { shift_id: 107, name: "Dr. Sarah Jenkins", role: "Dentist" },
+      { shift_id: 109, name: "Dr. Ahmed Khan", role: "Dentist" },
+      { shift_id: 111, name: "Nurse Thompson", role: "Nurse" },
+      { shift_id: 112, name: "Dr. Emily Chen", role: "Dentist" },
+    ];
   }
 
   return (
@@ -63,9 +102,9 @@ export function GanttRota() {
 
       {/* Canvas Area */}
       <div style={{ flex: 1, background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden" }}>
-        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={shifts} assignments={assignments} locations={locations} getLabel={getLabel} />}
-        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={shifts} assignments={assignments} locations={locations} getLabel={getLabel} />}
-        {view === "monthly_matrix" && <MonthlyMatrix selectedDate={selectedDate} shifts={shifts} assignments={assignments} />}
+        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} />}
+        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} />}
+        {view === "monthly_matrix" && <MonthlyMatrix selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} />}
       </div>
     </div>
   );
@@ -76,7 +115,7 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel }) {
   const days = rota?.days || [];
   
   return (
-    <div style={{ overflowX: "auto", width: "100%", maxHeight: "70vh", overflowY: "auto" }}>
+    <div style={{ overflow: "auto", width: "100%", height: "calc(100vh - 200px)" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
         <thead>
           <tr>
@@ -166,7 +205,7 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel 
   const nowPct = (currentMins / (HOURS * 60)) * 100;
 
   return (
-    <div style={{ display: "flex", overflowX: "auto", overflowY: "auto", maxHeight: "70vh", width: "100%", background: "var(--surface)" }}>
+    <div style={{ display: "flex", overflow: "auto", height: "calc(100vh - 200px)", width: "100%", background: "var(--surface)" }}>
       {/* Time Axis (Left) */}
       <div style={{ minWidth: "70px", borderRight: "1px solid var(--border)", position: "sticky", left: 0, background: "var(--surface)", zIndex: 10 }}>
         <div style={{ height: "50px", borderBottom: "1px solid var(--border)", background: "var(--surface-2)" }}></div> {/* Header spacer */}
@@ -263,7 +302,7 @@ function MonthlyMatrix({ selectedDate, shifts, assignments }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "70vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 200px)", overflowY: "auto" }}>
       {/* Days of Week Header */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
         {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(day => (
