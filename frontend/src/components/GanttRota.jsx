@@ -313,7 +313,7 @@ function MonthlyMatrix({ selectedDate, shifts, assignments }) {
       </div>
       
       {/* Calendar Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridAutoRows: "1fr", flex: 1, background: "var(--border)", gap: "1px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridAutoRows: "minmax(140px, 1fr)", flex: 1, background: "var(--border)", gap: "1px" }}>
         {calendarCells.map((d, idx) => {
           const isCurrentMonth = d.getMonth() === month;
           const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
