@@ -115,7 +115,7 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel }) {
   const days = rota?.days || [];
   
   return (
-    <div style={{ overflow: "auto", width: "100%", height: "calc(100vh - 200px)" }}>
+    <div style={{ overflowX: "auto", overflowY: "auto", width: "100%", height: "calc(100vh - 180px)" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
         <thead>
           <tr>
@@ -205,10 +205,10 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel 
   const nowPct = (currentMins / (HOURS * 60)) * 100;
 
   return (
-    <div style={{ display: "flex", overflow: "auto", height: "calc(100vh - 200px)", width: "100%", background: "var(--surface)" }}>
+    <div style={{ display: "flex", overflowX: "auto", overflowY: "auto", height: "calc(100vh - 180px)", width: "100%", background: "var(--surface)" }}>
       {/* Time Axis (Left) */}
-      <div style={{ minWidth: "70px", borderRight: "1px solid var(--border)", position: "sticky", left: 0, background: "var(--surface)", zIndex: 10 }}>
-        <div style={{ height: "50px", borderBottom: "1px solid var(--border)", background: "var(--surface-2)" }}></div> {/* Header spacer */}
+      <div style={{ minWidth: "70px", borderRight: "1px solid var(--border)", position: "sticky", left: 0, zIndex: 20, background: "var(--surface)" }}>
+        <div style={{ height: "50px", borderBottom: "1px solid var(--border)", background: "var(--surface-2)", position: "sticky", top: 0, zIndex: 30 }}></div> {/* Header spacer */}
         <div style={{ position: "relative", height: "1200px" }}>
           {Array.from({length: HOURS + 1}).map((_, i) => (
             <div key={i} style={{ position: "absolute", top: `${(i / HOURS) * 100}%`, transform: "translateY(-50%)", width: "100%", textAlign: "center", fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600" }}>
@@ -224,7 +224,7 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel 
           const wShifts = dailyShifts.filter(s => s.location === ward);
           return (
             <div key={ward} style={{ flex: 1, minWidth: "200px", borderRight: "1px solid var(--border)" }}>
-              <div style={{ height: "50px", borderBottom: "1px solid var(--border)", padding: "14px", textAlign: "center", fontWeight: "bold", background: "var(--surface-2)", color: "var(--text)" }}>
+              <div style={{ position: "sticky", top: 0, zIndex: 10, height: "50px", borderBottom: "1px solid var(--border)", padding: "14px", textAlign: "center", fontWeight: "bold", background: "var(--surface-2)", color: "var(--text)" }}>
                 {ward}
               </div>
               <div style={{ position: "relative", height: "1200px", background: "var(--surface)" }}>
@@ -302,7 +302,7 @@ function MonthlyMatrix({ selectedDate, shifts, assignments }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 200px)", overflowY: "auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 180px)", overflowY: "auto", overflowX: "auto" }}>
       {/* Days of Week Header */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
         {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(day => (
