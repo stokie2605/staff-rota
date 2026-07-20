@@ -10,6 +10,10 @@ RotaCare is a full-stack, industry-agnostic healthcare staff scheduling platform
 - **Export & Print Capabilities:** One-click CSV generation for data auditing and fully automated `@media print` CSS overrides that strip away UI elements to produce crisp, high-contrast black-and-white physical printouts for breakrooms.
 - **Full Database Persistence:** Wired into a high-performance backend, ensuring secure persistence of all mutations (shifts, assignments, staff, absences) alongside an intelligent optimistic UI architecture that gracefully falls back to offline local storage if network connectivity drops.
 
+<div align="center">
+  <img src="docs/rota week.png" width="750" alt="RotaCare Preview" />
+</div>
+
 ## 🛠️ Tech Stack
 
 - **Frontend:** React 18, Vite, Vanilla CSS / Tailwind CSS
