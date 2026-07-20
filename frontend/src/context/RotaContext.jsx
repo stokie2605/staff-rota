@@ -2,6 +2,13 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { api } from "../services/api";
 import { buildAlerts } from "../utils/alerts";
 
+function toInputDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function addDays(dateText, days) {
+  const d = new Date(`${dateText}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return toInputDate(d);
+}
+
 const RotaContext = createContext(null);
 
 export function RotaProvider({ children }) {
@@ -65,18 +72,46 @@ export function RotaProvider({ children }) {
         api.getAssignments()
       ]);
       setEmployees(emp);
-      setShifts(shf);
-      setRota(rta);
-      const assigns = rawAssigns.map(a => {
-        const employee = emp.find(e => e.id === a.employee_id) || {};
-        return {
-          ...a,
-          name: employee.name,
-          role: employee.role,
-          grade: employee.grade
-        };
-      });
-      setAssignments(assigns);
+      let finalShifts = shf;
+      let finalAssigns = assigns;
+
+      if (shf.length === 0) {
+        const todayStr = toInputDate(new Date());
+        const locs = getDefaultLocations();
+        finalShifts = [
+          { id: 101, date: todayStr, start_time: "08:00", end_time: "12:00", location: locs[0], required_grade: getLabel("role"), is_published: true },
+          { id: 102, date: todayStr, start_time: "13:00", end_time: "17:00", location: locs[0], required_grade: getLabel("role"), is_published: true },
+          { id: 103, date: todayStr, start_time: "09:00", end_time: "15:00", location: locs[1], required_grade: "Specialist", is_published: true },
+          { id: 104, date: todayStr, start_time: "08:30", end_time: "16:30", location: locs[3], required_grade: "Support", is_published: true },
+          { id: 105, date: addDays(todayStr, 1), start_time: "10:00", end_time: "18:00", location: locs[2], required_grade: getLabel("role"), is_published: true },
+          { id: 106, date: addDays(todayStr, 1), start_time: "09:00", end_time: "14:00", location: locs[4], required_grade: "Support", is_published: true },
+          { id: 107, date: addDays(todayStr, 2), start_time: "07:00", end_time: "19:00", location: locs[0], required_grade: getLabel("role"), is_published: true },
+          { id: 108, date: addDays(todayStr, 2), start_time: "08:00", end_time: "16:00", location: locs[3], required_grade: "Support", is_published: true },
+          { id: 109, date: addDays(todayStr, -1), start_time: "08:00", end_time: "18:00", location: locs[1], required_grade: getLabel("role"), is_published: true },
+          { id: 110, date: addDays(todayStr, 3), start_time: "09:00", end_time: "17:00", location: locs[2], required_grade: getLabel("role"), is_published: false },
+          { id: 111, date: addDays(todayStr, 5), start_time: "10:00", end_time: "16:00", location: locs[4], required_grade: "Support", is_published: true },
+          { id: 112, date: addDays(todayStr, 10), start_time: "08:00", end_time: "14:00", location: locs[0], required_grade: getLabel("role"), is_published: true },
+          { id: 113, date: addDays(todayStr, 15), start_time: "09:00", end_time: "17:00", location: locs[1], required_grade: "Specialist", is_published: true },
+          { id: 114, date: addDays(todayStr, -5), start_time: "08:00", end_time: "16:00", location: locs[3], required_grade: "Support", is_published: true },
+          { id: 115, date: addDays(todayStr, 20), start_time: "10:00", end_time: "18:00", location: locs[4], required_grade: "Support", is_published: true },
+        ];
+        finalAssigns = [
+          { shift_id: 101, name: "Dr. Sarah Jenkins", role: getLabel("role") },
+          { shift_id: 102, name: "Dr. Sarah Jenkins", role: getLabel("role") },
+          { shift_id: 103, name: "Dr. Ahmed Khan", role: "Specialist" },
+          { shift_id: 104, name: "Chloe Evans", role: "Support" },
+          { shift_id: 105, name: "Dr. Emily Chen", role: getLabel("role") },
+          { shift_id: 106, name: "Nurse Thompson", role: "Support" },
+          { shift_id: 107, name: "Dr. Sarah Jenkins", role: getLabel("role") },
+          { shift_id: 109, name: "Dr. Ahmed Khan", role: getLabel("role") },
+          { shift_id: 111, name: "Nurse Thompson", role: "Support" },
+          { shift_id: 112, name: "Dr. Emily Chen", role: getLabel("role") },
+        ];
+      }
+
+      setShifts(finalShifts);
+      setAssignments(finalAssigns);
+      
       setSwapRequests(swp);
       setAbsences(abs);
       setBackendOk(true);
@@ -86,7 +121,7 @@ export function RotaProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedDate]);
+  }, [selectedDate, getLabel, getDefaultLocations]);
 
   useEffect(() => {
     loadData();
@@ -97,8 +132,12 @@ export function RotaProvider({ children }) {
   }, [rota, swapRequests, employees, selectedDate]);
 
   const locations = useMemo(() => {
-    return [...new Set((shifts || []).map(s => s.location))].sort();
-  }, [shifts]);
+    const activeShifts = shifts || [];
+    if (activeShifts.length > 0) {
+      return [...new Set(activeShifts.map(s => s.location))].sort();
+    }
+    return getDefaultLocations();
+  }, [shifts, getDefaultLocations]);
 
   const value = {
     employees,
@@ -120,7 +159,9 @@ export function RotaProvider({ children }) {
     industryTemplate,
     setIndustryTemplate,
     getLabel,
-    getDefaultLocations
+    getDefaultLocations,
+    setShifts,
+    setAssignments
   };
 
   return <RotaContext.Provider value={value}>{children}</RotaContext.Provider>;

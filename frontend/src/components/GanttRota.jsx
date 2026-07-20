@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useRota } from "../context/RotaContext";
+import { ShiftModal } from "./ShiftModal";
 
 function toInputDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 function addDays(dateText, days) {
@@ -12,6 +13,13 @@ function addDays(dateText, days) {
 export function GanttRota() {
   const { rota, shifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations } = useRota();
   const [view, setView] = useState("week_grid");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalData, setModalData] = useState(null);
+
+  const openModal = (data = null) => {
+    setModalData(data);
+    setIsModalOpen(true);
+  };
   
   const onPrevious = () => setSelectedDate(addDays(selectedDate, view === 'monthly_matrix' ? -30 : -7));
   const onNext = () => setSelectedDate(addDays(selectedDate, view === 'monthly_matrix' ? 30 : 7));
@@ -99,21 +107,24 @@ export function GanttRota() {
           </span>
           <button className="btn btn-outline" style={{ padding: "6px 12px" }} onClick={onNext}>›</button>
           <button className="btn btn-outline" style={{ padding: "6px 12px", fontSize: "0.85rem" }} onClick={onToday}>Today</button>
+          <button className="btn btn-primary" style={{ padding: "6px 12px", fontSize: "0.85rem", marginLeft: "12px" }} onClick={() => openModal()}>+ New Shift</button>
         </div>
       </div>
 
       {/* Canvas Area */}
       <div style={{ flex: 1, background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} />}
-        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} />}
+        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} />}
+        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} />}
         {view === "monthly_matrix" && <MonthlyMatrix selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} />}
       </div>
+      
+      <ShiftModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} initialData={modalData} />
     </div>
   );
 }
 
 // ─── 1. Weekly Mode Grid ───────────────────────────────────────────
-function WeeklyGrid({ rota, shifts, assignments, locations, getLabel }) {
+function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModal }) {
   const days = rota?.days || [];
   
   return (
@@ -141,9 +152,13 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel }) {
               {days.map(d => {
                 const dayShifts = (shifts || []).filter(s => s.date === d.date && s.location === ward);
                 return (
-                  <td key={d.date} style={{ borderBottom: "1px solid var(--border)", borderRight: "1px solid var(--border)", padding: "12px", verticalAlign: "top", background: "var(--surface)" }}>
+                  <td 
+                    key={d.date} 
+                    style={{ borderBottom: "1px solid var(--border)", borderRight: "1px solid var(--border)", padding: "12px", verticalAlign: "top", background: "var(--surface)", cursor: dayShifts.length === 0 ? "pointer" : "default" }}
+                    onClick={() => { if (dayShifts.length === 0 && onOpenModal) onOpenModal({ date: d.date, location: ward }); }}
+                  >
                     {dayShifts.length === 0 && (
-                      <div style={{ border: "2px dashed var(--border)", padding: "20px", textAlign: "center", borderRadius: "8px", color: "var(--text-faint)", cursor: "pointer" }}>
+                      <div style={{ border: "2px dashed var(--border)", padding: "20px", textAlign: "center", borderRadius: "8px", color: "var(--text-faint)" }}>
                         +
                       </div>
                     )}
@@ -151,13 +166,21 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel }) {
                       const assigns = (assignments || []).filter(a => a.shift_id === shift.id);
                       const isUnassigned = assigns.length === 0;
                       return (
-                        <div key={shift.id} style={{ 
+                        <div key={shift.id} 
+                          onClick={(e) => {
+                            if (isUnassigned && onOpenModal) {
+                              e.stopPropagation();
+                              onOpenModal(shift);
+                            }
+                          }}
+                          style={{ 
                           border: isUnassigned ? "1px dashed var(--critical)" : "1px solid var(--border)",
                           background: isUnassigned ? "var(--critical-bg)" : "var(--surface-2)",
                           borderRadius: "8px",
                           padding: "12px",
                           marginBottom: "12px",
-                          boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+                          cursor: isUnassigned ? "pointer" : "default"
                         }}>
                           <div style={{ fontWeight: "600", fontSize: "0.85rem", color: "var(--text)", marginBottom: "8px" }}>
                             {shift.start_time} - {shift.end_time}
@@ -195,7 +218,7 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel }) {
 }
 
 // ─── 2. Daily Vertical Calendar Mode ───────────────────────────────
-function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel }) {
+function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel, onOpenModal }) {
   const dailyShifts = (shifts || []).filter(s => s.date === selectedDate);
   const START_HR = 6;
   const END_HR = 24;
@@ -229,10 +252,17 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel 
               <div style={{ position: "sticky", top: 0, zIndex: 10, height: "50px", borderBottom: "1px solid var(--border)", padding: "14px", textAlign: "center", fontWeight: "bold", background: "var(--surface-2)", color: "var(--text)" }}>
                 {ward}
               </div>
-              <div style={{ position: "relative", height: "1200px", background: "var(--surface)" }}>
+              <div 
+                style={{ position: "relative", height: "1200px", background: "var(--surface)", cursor: "crosshair" }}
+                onClick={(e) => {
+                  if (onOpenModal && e.target === e.currentTarget) {
+                    onOpenModal({ date: selectedDate, location: ward });
+                  }
+                }}
+              >
                 {/* Horizontal Gridlines */}
                 {Array.from({length: HOURS}).map((_, i) => (
-                  <div key={i} style={{ position: "absolute", top: `${(i / HOURS) * 100}%`, width: "100%", height: "1px", background: "var(--border)" }}></div>
+                  <div key={i} style={{ position: "absolute", top: `${(i / HOURS) * 100}%`, width: "100%", height: "1px", background: "var(--border)", pointerEvents: "none" }}></div>
                 ))}
 
                 {/* Vertical Blocks */}
@@ -254,13 +284,21 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel 
                   const isUnassigned = assigns.length === 0;
                   
                   return (
-                    <div key={shift.id} style={{ 
+                    <div key={shift.id} 
+                      onClick={(e) => {
+                        if (isUnassigned && onOpenModal) {
+                          e.stopPropagation();
+                          onOpenModal(shift);
+                        }
+                      }}
+                      style={{ 
                       position: "absolute", top: `${top}%`, height: `${height}%`, left: "8px", right: "8px", 
                       background: isUnassigned ? "var(--critical-bg)" : "var(--primary-light)",
                       border: isUnassigned ? "2px dashed var(--critical)" : "1px solid var(--primary)",
                       borderRadius: "8px", padding: "8px", overflow: "hidden",
                       color: "var(--text)",
-                      boxShadow: "0 4px 10px rgba(0,0,0,0.05)"
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+                      cursor: isUnassigned ? "pointer" : "default"
                     }}>
                       <div style={{ fontWeight: "bold", fontSize: "0.85rem", marginBottom: "4px" }}>{shift.start_time} - {shift.end_time}</div>
                       <div style={{ fontSize: "0.8rem" }}>
