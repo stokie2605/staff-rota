@@ -65,7 +65,7 @@ export function GanttRota() {
   }
 
   return (
-    <div className="gantt-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div className="gantt-card" style={{ display: "flex", flexDirection: "column", gap: "16px", height: "calc(100vh - 120px)" }}>
       {/* View Controls */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--surface)", padding: "16px", borderRadius: "12px", border: "1px solid var(--border)" }}>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -101,7 +101,7 @@ export function GanttRota() {
       </div>
 
       {/* Canvas Area */}
-      <div style={{ flex: 1, background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden" }}>
+      <div style={{ flex: 1, background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {view === "week_grid" && <WeeklyGrid rota={rota} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} />}
         {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} />}
         {view === "monthly_matrix" && <MonthlyMatrix selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} />}
@@ -115,7 +115,7 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel }) {
   const days = rota?.days || [];
   
   return (
-    <div style={{ overflowX: "auto", overflowY: "auto", width: "100%", height: "calc(100vh - 180px)" }}>
+    <div style={{ overflowX: "auto", overflowY: "auto", width: "100%", height: "100%" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
         <thead>
           <tr>
@@ -205,7 +205,7 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel 
   const nowPct = (currentMins / (HOURS * 60)) * 100;
 
   return (
-    <div style={{ display: "flex", overflowX: "auto", overflowY: "auto", height: "calc(100vh - 180px)", width: "100%", background: "var(--surface)" }}>
+    <div style={{ display: "flex", overflowX: "auto", overflowY: "auto", height: "100%", width: "100%", background: "var(--surface)" }}>
       {/* Time Axis (Left) */}
       <div style={{ minWidth: "70px", borderRight: "1px solid var(--border)", position: "sticky", left: 0, zIndex: 20, background: "var(--surface)" }}>
         <div style={{ height: "50px", borderBottom: "1px solid var(--border)", background: "var(--surface-2)", position: "sticky", top: 0, zIndex: 30 }}></div> {/* Header spacer */}
@@ -302,7 +302,7 @@ function MonthlyMatrix({ selectedDate, shifts, assignments }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 180px)", overflowY: "auto", overflowX: "auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", overflowX: "auto" }}>
       {/* Days of Week Header */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
         {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(day => (
