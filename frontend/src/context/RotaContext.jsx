@@ -24,16 +24,26 @@ export function RotaProvider({ children }) {
 
   const getLabel = useCallback((type) => {
     if (industryTemplate === "dental") {
-      return type === "location" ? "Chair" : "Practitioner";
+      return type === "location" ? "SURGERY" : "Practitioner";
     }
     if (industryTemplate === "care_home") {
-      return type === "location" ? "Unit/Floor" : "Carer";
+      return type === "location" ? "UNIT / FLOOR" : "Carer";
     }
     if (industryTemplate === "physio") {
-      return type === "location" ? "Treatment Room" : "Therapist";
+      return type === "location" ? "TREATMENT ROOM" : "Therapist";
+    }
+    if (industryTemplate === "general") {
+      return type === "location" ? "LOCATION" : "Staff";
     }
     // general default
-    return type === "location" ? "Location" : "Staff";
+    return type === "location" ? "LOCATION" : "Staff";
+  }, [industryTemplate]);
+
+  const getDefaultLocations = useCallback(() => {
+    if (industryTemplate === "dental") return ["Surgery 1", "Surgery 2", "Surgery 3", "Hygiene Suite", "Decon / LDU"];
+    if (industryTemplate === "physio") return ["Treatment Room 1", "Treatment Room 2", "Rehab Gym", "Assessment Bay"];
+    if (industryTemplate === "care_home") return ["Ground Floor Residential", "Memory Care Wing", "First Floor Nursing", "Respite Unit"];
+    return ["Consultation Room 1", "Triage Bay", "Minor Ops Suite", "Outpatients Ward"];
   }, [industryTemplate]);
 
   const login = (user) => {
@@ -109,7 +119,8 @@ export function RotaProvider({ children }) {
     logout,
     industryTemplate,
     setIndustryTemplate,
-    getLabel
+    getLabel,
+    getDefaultLocations
   };
 
   return <RotaContext.Provider value={value}>{children}</RotaContext.Provider>;

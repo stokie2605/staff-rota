@@ -10,7 +10,7 @@ function addDays(dateText, days) {
 
 // ─── Main Wrapper ──────────────────────────────────────────────────
 export function GanttRota() {
-  const { rota, shifts, assignments, selectedDate, setSelectedDate, loading, getLabel, locations } = useRota();
+  const { rota, shifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations } = useRota();
   const [view, setView] = useState("week_grid");
   
   const onPrevious = () => setSelectedDate(addDays(selectedDate, view === 'monthly_matrix' ? -30 : -7));
@@ -32,35 +32,37 @@ export function GanttRota() {
   // Inject hardcoded SaaS Demo data if backend is empty
   if (renderShifts.length === 0) {
     const todayStr = toInputDate(new Date());
-    renderLocations = ["Chair 1", "Chair 2", "Chair 3", "Hygiene A", "Consultation B"];
+    renderLocations = getDefaultLocations();
+    const [loc1, loc2, loc3, loc4, loc5] = renderLocations;
+    
     renderShifts = [
-      { id: 101, date: todayStr, start_time: "08:00", end_time: "12:00", location: "Chair 1", required_grade: "Dentist", is_published: true },
-      { id: 102, date: todayStr, start_time: "13:00", end_time: "17:00", location: "Chair 1", required_grade: "Dentist", is_published: true },
-      { id: 103, date: todayStr, start_time: "09:00", end_time: "15:00", location: "Chair 2", required_grade: "Orthodontist", is_published: true },
-      { id: 104, date: todayStr, start_time: "08:30", end_time: "16:30", location: "Hygiene A", required_grade: "Hygienist", is_published: true },
-      { id: 105, date: addDays(todayStr, 1), start_time: "10:00", end_time: "18:00", location: "Chair 3", required_grade: "Dentist", is_published: true },
-      { id: 106, date: addDays(todayStr, 1), start_time: "09:00", end_time: "14:00", location: "Consultation B", required_grade: "Nurse", is_published: true },
-      { id: 107, date: addDays(todayStr, 2), start_time: "07:00", end_time: "19:00", location: "Chair 1", required_grade: "Dentist", is_published: true },
-      { id: 108, date: addDays(todayStr, 2), start_time: "08:00", end_time: "16:00", location: "Hygiene A", required_grade: "Hygienist", is_published: true },
-      { id: 109, date: addDays(todayStr, -1), start_time: "08:00", end_time: "18:00", location: "Chair 2", required_grade: "Dentist", is_published: true },
-      { id: 110, date: addDays(todayStr, 3), start_time: "09:00", end_time: "17:00", location: "Chair 3", required_grade: "Dentist", is_published: false },
-      { id: 111, date: addDays(todayStr, 5), start_time: "10:00", end_time: "16:00", location: "Consultation B", required_grade: "Nurse", is_published: true },
-      { id: 112, date: addDays(todayStr, 10), start_time: "08:00", end_time: "14:00", location: "Chair 1", required_grade: "Dentist", is_published: true },
-      { id: 113, date: addDays(todayStr, 15), start_time: "09:00", end_time: "17:00", location: "Chair 2", required_grade: "Orthodontist", is_published: true },
-      { id: 114, date: addDays(todayStr, -5), start_time: "08:00", end_time: "16:00", location: "Hygiene A", required_grade: "Hygienist", is_published: true },
-      { id: 115, date: addDays(todayStr, 20), start_time: "10:00", end_time: "18:00", location: "Consultation B", required_grade: "Nurse", is_published: true },
+      { id: 101, date: todayStr, start_time: "08:00", end_time: "12:00", location: loc1, required_grade: getLabel("role"), is_published: true },
+      { id: 102, date: todayStr, start_time: "13:00", end_time: "17:00", location: loc1, required_grade: getLabel("role"), is_published: true },
+      { id: 103, date: todayStr, start_time: "09:00", end_time: "15:00", location: loc2, required_grade: "Specialist", is_published: true },
+      { id: 104, date: todayStr, start_time: "08:30", end_time: "16:30", location: loc4, required_grade: "Support", is_published: true },
+      { id: 105, date: addDays(todayStr, 1), start_time: "10:00", end_time: "18:00", location: loc3, required_grade: getLabel("role"), is_published: true },
+      { id: 106, date: addDays(todayStr, 1), start_time: "09:00", end_time: "14:00", location: loc5, required_grade: "Support", is_published: true },
+      { id: 107, date: addDays(todayStr, 2), start_time: "07:00", end_time: "19:00", location: loc1, required_grade: getLabel("role"), is_published: true },
+      { id: 108, date: addDays(todayStr, 2), start_time: "08:00", end_time: "16:00", location: loc4, required_grade: "Support", is_published: true },
+      { id: 109, date: addDays(todayStr, -1), start_time: "08:00", end_time: "18:00", location: loc2, required_grade: getLabel("role"), is_published: true },
+      { id: 110, date: addDays(todayStr, 3), start_time: "09:00", end_time: "17:00", location: loc3, required_grade: getLabel("role"), is_published: false },
+      { id: 111, date: addDays(todayStr, 5), start_time: "10:00", end_time: "16:00", location: loc5, required_grade: "Support", is_published: true },
+      { id: 112, date: addDays(todayStr, 10), start_time: "08:00", end_time: "14:00", location: loc1, required_grade: getLabel("role"), is_published: true },
+      { id: 113, date: addDays(todayStr, 15), start_time: "09:00", end_time: "17:00", location: loc2, required_grade: "Specialist", is_published: true },
+      { id: 114, date: addDays(todayStr, -5), start_time: "08:00", end_time: "16:00", location: loc4, required_grade: "Support", is_published: true },
+      { id: 115, date: addDays(todayStr, 20), start_time: "10:00", end_time: "18:00", location: loc5, required_grade: "Support", is_published: true },
     ];
     renderAssigns = [
-      { shift_id: 101, name: "Dr. Sarah Jenkins", role: "Dentist" },
-      { shift_id: 102, name: "Dr. Sarah Jenkins", role: "Dentist" },
-      { shift_id: 103, name: "Dr. Ahmed Khan", role: "Orthodontist" },
-      { shift_id: 104, name: "Chloe Evans", role: "Hygienist" },
-      { shift_id: 105, name: "Dr. Emily Chen", role: "Dentist" },
-      { shift_id: 106, name: "Nurse Thompson", role: "Nurse" },
-      { shift_id: 107, name: "Dr. Sarah Jenkins", role: "Dentist" },
-      { shift_id: 109, name: "Dr. Ahmed Khan", role: "Dentist" },
-      { shift_id: 111, name: "Nurse Thompson", role: "Nurse" },
-      { shift_id: 112, name: "Dr. Emily Chen", role: "Dentist" },
+      { shift_id: 101, name: "Dr. Sarah Jenkins", role: getLabel("role") },
+      { shift_id: 102, name: "Dr. Sarah Jenkins", role: getLabel("role") },
+      { shift_id: 103, name: "Dr. Ahmed Khan", role: "Specialist" },
+      { shift_id: 104, name: "Chloe Evans", role: "Support" },
+      { shift_id: 105, name: "Dr. Emily Chen", role: getLabel("role") },
+      { shift_id: 106, name: "Nurse Thompson", role: "Support" },
+      { shift_id: 107, name: "Dr. Sarah Jenkins", role: getLabel("role") },
+      { shift_id: 109, name: "Dr. Ahmed Khan", role: getLabel("role") },
+      { shift_id: 111, name: "Nurse Thompson", role: "Support" },
+      { shift_id: 112, name: "Dr. Emily Chen", role: getLabel("role") },
     ];
   }
 
