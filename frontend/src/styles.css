@@ -1353,3 +1353,54 @@ tr:hover td { background: var(--surface-2); }
   padding: 4px;
 }
 .toast-close:hover { color: var(--text); }
+
+
+/* ==========================================================================
+   Print Styles (Step 2C)
+   ========================================================================== */
+@media print {
+  /* Hide non-printable elements */
+  .sidebar, .topnav, .print-hide, .btn:not(.print-show), button {
+    display: none !important;
+  }
+  
+  /* Reset layout constraints for full-page printing */
+  body, html, #root, .app-shell, .app-body, .main-content {
+    height: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #FFF !important;
+  }
+
+  .gantt-card {
+    height: auto !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* High Contrast Grid Borders */
+  table { border-collapse: collapse !important; border: 1px solid #000 !important; }
+  th, td { 
+    border: 1px solid #333 !important; 
+    color: #000 !important; 
+    background: #FFF !important;
+  }
+  
+  /* Shift Cards Black & White styling */
+  div[draggable="true"] {
+    border: 1px solid #000 !important;
+    background: #FFF !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  /* Ensure text is clearly visible */
+  * {
+    color: #000 !important;
+  }
+}
+

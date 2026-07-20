@@ -11,7 +11,7 @@ function addDays(dateText, days) {
 
 // ─── Main Wrapper ──────────────────────────────────────────────────
 export function GanttRota() {
-  const { rota, shifts, setShifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations, absences } = useRota();
+  const { rota, shifts, setShifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations, absences, industryTemplate } = useRota();
   const [view, setView] = useState("week_grid");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
@@ -68,6 +68,49 @@ export function GanttRota() {
       };
       setShifts(newShifts);
     }
+  };
+
+  const exportToCSV = () => {
+    const csvRows = [];
+    csvRows.push(["Date", "Location/Room", "Start Time", "End Time", "Assigned Staff", "Role", "Compliance Status"]);
+
+    (renderShifts || []).forEach(shift => {
+      const assigns = (assignments || []).filter(a => a.shift_id === shift.id);
+      let staffNames = [];
+      let compliance = "Compliant";
+      
+      if (assigns.length === 0) {
+        compliance = "Non-Compliant (Unassigned)";
+        staffNames = ["Unassigned"];
+      } else {
+        const conflicts = assigns.filter(a => {
+          return (absences || []).some(abs => abs.employee_name === a.name && shift.date >= abs.start_date && shift.date <= abs.end_date);
+        });
+        if (conflicts.length > 0) {
+          compliance = "Non-Compliant (Leave Conflict)";
+        }
+        staffNames = assigns.map(a => a.name);
+      }
+      
+      csvRows.push([
+        shift.date,
+        `"${shift.location}"`,
+        shift.start_time,
+        shift.end_time,
+        `"${staffNames.join(", ")}"`,
+        `"${shift.required_grade || ''}"`,
+        `"${compliance}"`
+      ]);
+    });
+
+    const csvContent = csvRows.map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Rota_Export_${industryTemplate || 'SaaS'}_${selectedDate}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
   
   const onPrevious = () => setSelectedDate(addDays(selectedDate, view === 'monthly_matrix' ? -30 : -7));
@@ -156,7 +199,9 @@ export function GanttRota() {
           </span>
           <button className="btn btn-outline" style={{ padding: "6px 12px" }} onClick={onNext}>›</button>
           <button className="btn btn-outline" style={{ padding: "6px 12px", fontSize: "0.85rem" }} onClick={onToday}>Today</button>
-          <button className="btn btn-primary" style={{ padding: "6px 12px", fontSize: "0.85rem", marginLeft: "12px" }} onClick={() => openModal()}>+ New Shift</button>
+          <button className="btn btn-outline print-hide" style={{ padding: "6px 12px", fontSize: "0.85rem", marginLeft: "12px" }} onClick={exportToCSV}>Export CSV</button>
+          <button className="btn btn-outline print-hide" style={{ padding: "6px 12px", fontSize: "0.85rem" }} onClick={() => window.print()}>Print Rota</button>
+          <button className="btn btn-primary print-hide" style={{ padding: "6px 12px", fontSize: "0.85rem" }} onClick={() => openModal()}>+ New Shift</button>
         </div>
       </div>
 
