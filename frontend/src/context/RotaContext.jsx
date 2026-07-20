@@ -85,7 +85,18 @@ export function RotaProvider({ children }) {
       setEmployees(finalEmployees);
 
       let finalShifts = shf;
-      let finalAssigns = assigns;
+      let finalAssigns = rawAssigns;
+      
+      let finalAbsences = abs;
+      if (abs.length === 0) {
+        const todayStr = toInputDate(new Date());
+        finalAbsences = [
+          { id: 1, employee_id: 1, employee_name: "Dr. Sarah Jenkins", start_date: todayStr, end_date: todayStr, reason: "Annual Leave", status: "Approved", notes: "Pre-booked holiday" }
+        ];
+      }
+      setAbsences(finalAbsences);
+
+      setRota(rta);
 
       if (shf.length === 0) {
         const todayStr = toInputDate(new Date());
@@ -174,7 +185,8 @@ export function RotaProvider({ children }) {
     getDefaultLocations,
     setShifts,
     setAssignments,
-    setEmployees
+    setEmployees,
+    setAbsences
   };
 
   return <RotaContext.Provider value={value}>{children}</RotaContext.Provider>;

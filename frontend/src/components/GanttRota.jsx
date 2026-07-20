@@ -11,7 +11,7 @@ function addDays(dateText, days) {
 
 // ─── Main Wrapper ──────────────────────────────────────────────────
 export function GanttRota() {
-  const { rota, shifts, setShifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations } = useRota();
+  const { rota, shifts, setShifts, assignments, selectedDate, setSelectedDate, loading, getLabel, getDefaultLocations, locations, absences } = useRota();
   const [view, setView] = useState("week_grid");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
@@ -162,9 +162,9 @@ export function GanttRota() {
 
       {/* Canvas Area */}
       <div style={{ flex: 1, background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} onDropShift={handleDropShift} />}
-        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} onDropShiftTime={handleDropShiftTime} />}
-        {view === "monthly_matrix" && <MonthlyMatrix selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} />}
+        {view === "week_grid" && <WeeklyGrid rota={rota} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} onDropShift={handleDropShift} absences={absences} />}
+        {view === "daily_vertical" && <DailyVertical selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} locations={renderLocations} getLabel={getLabel} onOpenModal={openModal} onDropShiftTime={handleDropShiftTime} absences={absences} />}
+        {view === "monthly_matrix" && <MonthlyMatrix selectedDate={selectedDate} shifts={renderShifts} assignments={renderAssigns} absences={absences} />}
       </div>
       
       <ShiftModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} initialData={modalData} />
@@ -173,7 +173,7 @@ export function GanttRota() {
 }
 
 // ─── 1. Weekly Mode Grid ───────────────────────────────────────────
-function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModal, onDropShift }) {
+function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModal, onDropShift, absences }) {
   const days = rota?.days || [];
   
   return (
@@ -220,6 +220,12 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModa
                     {dayShifts.map(shift => {
                       const assigns = (assignments || []).filter(a => a.shift_id === shift.id);
                       const isUnassigned = assigns.length === 0;
+                      
+                      const conflicts = assigns.filter(a => {
+                        return (absences || []).some(abs => abs.employee_name === a.name && shift.date >= abs.start_date && shift.date <= abs.end_date);
+                      });
+                      const hasConflict = conflicts.length > 0;
+
                       return (
                         <div key={shift.id} 
                           draggable={true}
@@ -231,8 +237,8 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModa
                             }
                           }}
                           style={{ 
-                          border: isUnassigned ? "1px dashed var(--critical)" : "1px solid var(--border)",
-                          background: isUnassigned ? "var(--critical-bg)" : "var(--surface-2)",
+                          border: isUnassigned || hasConflict ? "1px dashed var(--critical)" : "1px solid var(--border)",
+                          background: isUnassigned || hasConflict ? "var(--critical-bg)" : "var(--surface-2)",
                           borderRadius: "8px",
                           padding: "12px",
                           marginBottom: "12px",
@@ -249,10 +255,15 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModa
                             </div>
                           ) : (
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                              {hasConflict && (
+                                <div style={{ display: "inline-block", background: "var(--critical)", color: "white", padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "bold", marginBottom: "4px", width: "fit-content" }}>
+                                  ⚠️ CONFLICT: ON LEAVE
+                                </div>
+                              )}
                               {assigns.map(a => (
                                 <div key={a.assignment_id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--primary)" }}></div>
-                                  <span style={{ fontSize: "0.85rem", color: "var(--text)" }}>{a.name}</span>
+                                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: hasConflict && conflicts.includes(a) ? "var(--critical)" : "var(--primary)" }}></div>
+                                  <span style={{ fontSize: "0.85rem", color: hasConflict && conflicts.includes(a) ? "var(--critical)" : "var(--text)", fontWeight: hasConflict && conflicts.includes(a) ? "bold" : "normal" }}>{a.name}</span>
                                 </div>
                               ))}
                             </div>
@@ -275,7 +286,7 @@ function WeeklyGrid({ rota, shifts, assignments, locations, getLabel, onOpenModa
 }
 
 // ─── 2. Daily Vertical Calendar Mode ───────────────────────────────
-function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel, onOpenModal, onDropShiftTime }) {
+function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel, onOpenModal, onDropShiftTime, absences }) {
   const dailyShifts = (shifts || []).filter(s => s.date === selectedDate);
   const START_HR = 6;
   const END_HR = 24;
@@ -348,6 +359,11 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel,
                   const assigns = (assignments || []).filter(a => a.shift_id === shift.id);
                   const isUnassigned = assigns.length === 0;
                   
+                  const conflicts = assigns.filter(a => {
+                    return (absences || []).some(abs => abs.employee_name === a.name && shift.date >= abs.start_date && shift.date <= abs.end_date);
+                  });
+                  const hasConflict = conflicts.length > 0;
+                  
                   return (
                     <div key={shift.id} 
                       draggable={true}
@@ -360,15 +376,23 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel,
                       }}
                       style={{ 
                       position: "absolute", top: `${top}%`, height: `${height}%`, left: "8px", right: "8px", 
-                      background: isUnassigned ? "var(--critical-bg)" : "var(--primary-light)",
-                      border: isUnassigned ? "2px dashed var(--critical)" : "1px solid var(--primary)",
+                      background: isUnassigned || hasConflict ? "var(--critical-bg)" : "var(--primary-light)",
+                      border: isUnassigned || hasConflict ? "2px dashed var(--critical)" : "1px solid var(--primary)",
                       borderRadius: "8px", padding: "8px", overflow: "hidden",
                       color: "var(--text)",
                       boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-                      cursor: isUnassigned ? "pointer" : "default"
+                      cursor: isUnassigned ? "pointer" : "default",
+                      display: "flex", flexDirection: "column"
                     }}>
                       <div style={{ fontWeight: "bold", fontSize: "0.85rem", marginBottom: "4px" }}>{shift.start_time} - {shift.end_time}</div>
-                      <div style={{ fontSize: "0.8rem" }}>
+                      
+                      {hasConflict && !isUnassigned && (
+                        <div style={{ background: "var(--critical)", color: "white", padding: "2px 4px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: "bold", marginBottom: "4px", width: "fit-content" }}>
+                          ⚠️ CONFLICT: ON LEAVE
+                        </div>
+                      )}
+                      
+                      <div style={{ fontSize: "0.8rem", color: hasConflict ? "var(--critical)" : "inherit", fontWeight: hasConflict ? "bold" : "normal" }}>
                         {isUnassigned ? "⚠️ Unassigned" : assigns.map(a => a.name).join(", ")}
                       </div>
                     </div>
@@ -391,7 +415,7 @@ function DailyVertical({ selectedDate, shifts, assignments, locations, getLabel,
 }
 
 // ─── 3. Monthly Matrix Mode ────────────────────────────────────────
-function MonthlyMatrix({ selectedDate, shifts, assignments }) {
+function MonthlyMatrix({ selectedDate, shifts, assignments, absences }) {
   const current = new Date(selectedDate);
   const year = current.getFullYear();
   const month = current.getMonth();
@@ -427,6 +451,7 @@ function MonthlyMatrix({ selectedDate, shifts, assignments }) {
           
           const dShifts = (shifts || []).filter(s => s.date === dateStr);
           let unassignedCount = 0;
+          let conflictCount = 0;
           const roleCounts = {};
           
           dShifts.forEach(s => {
@@ -436,6 +461,10 @@ function MonthlyMatrix({ selectedDate, shifts, assignments }) {
               assigns.forEach(a => {
                 const roleName = a.role || a.grade || "Staff";
                 roleCounts[roleName] = (roleCounts[roleName] || 0) + 1;
+                
+                // Check if this assignment conflicts with absences
+                const isConflict = (absences || []).some(abs => abs.employee_name === a.name && s.date >= abs.start_date && s.date <= abs.end_date);
+                if (isConflict) conflictCount++;
               });
             }
           });
@@ -451,9 +480,14 @@ function MonthlyMatrix({ selectedDate, shifts, assignments }) {
                 <strong style={{ fontSize: "1.1rem", color: dateStr === selectedDate ? "var(--primary)" : "var(--text)" }}>
                   {d.getDate()}
                 </strong>
-                {unassignedCount > 0 && (
-                  <span title={`${unassignedCount} unassigned`} style={{ color: "var(--critical)", fontSize: "1rem" }}>⚠️</span>
-                )}
+                <div style={{ display: "flex", gap: "4px" }}>
+                  {unassignedCount > 0 && (
+                    <span title={`${unassignedCount} unassigned`} style={{ color: "var(--warning)", fontSize: "1rem" }}>⚠️</span>
+                  )}
+                  {conflictCount > 0 && (
+                    <span title={`${conflictCount} conflicting shifts on leave`} style={{ color: "var(--critical)", fontSize: "1rem" }}>🛑</span>
+                  )}
+                </div>
               </div>
               
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
