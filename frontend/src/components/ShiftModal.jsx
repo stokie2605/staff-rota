@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useRota } from "../context/RotaContext";
 
 export function ShiftModal({ isOpen, onClose, initialData }) {
-  const { shifts, setShifts, assignments, setAssignments, getDefaultLocations, getLabel } = useRota();
+  const { shifts, setShifts, assignments, setAssignments, getDefaultLocations, getLabel, employees } = useRota();
 
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
@@ -116,11 +116,9 @@ export function ShiftModal({ isOpen, onClose, initialData }) {
             Assignee
             <select value={assignee} onChange={e => setAssignee(e.target.value)} style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--surface-2)", color: "var(--text)" }}>
               <option value="">-- Unassigned --</option>
-              <option value="Dr. Sarah Jenkins">Dr. Sarah Jenkins</option>
-              <option value="Dr. Ahmed Khan">Dr. Ahmed Khan</option>
-              <option value="Dr. Emily Chen">Dr. Emily Chen</option>
-              <option value="Nurse Thompson">Nurse Thompson</option>
-              <option value="Chloe Evans">Chloe Evans</option>
+              {employees.map(emp => (
+                <option key={emp.id || emp.name} value={emp.name}>{emp.name}</option>
+              ))}
             </select>
           </label>
 

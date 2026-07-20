@@ -71,7 +71,19 @@ export function RotaProvider({ children }) {
         api.getAbsences(),
         api.getAssignments()
       ]);
-      setEmployees(emp);
+      
+      let finalEmployees = emp;
+      if (emp.length === 0) {
+        finalEmployees = [
+          { id: 1, name: "Dr. Sarah Jenkins", role: "Dentist", contracted_hours: 40, preferred_shifts: "Morning", is_locum: false },
+          { id: 2, name: "Dr. Ahmed Khan", role: "Orthodontist", contracted_hours: 32, preferred_shifts: "Any", is_locum: false },
+          { id: 3, name: "Dr. Emily Chen", role: "Dentist", contracted_hours: 40, preferred_shifts: "Any", is_locum: false },
+          { id: 4, name: "Nurse Thompson", role: "Nurse", contracted_hours: 36, preferred_shifts: "Afternoon", is_locum: false },
+          { id: 5, name: "Chloe Evans", role: "Hygienist", contracted_hours: 20, preferred_shifts: "Morning", is_locum: false },
+        ];
+      }
+      setEmployees(finalEmployees);
+
       let finalShifts = shf;
       let finalAssigns = assigns;
 
@@ -161,7 +173,8 @@ export function RotaProvider({ children }) {
     getLabel,
     getDefaultLocations,
     setShifts,
-    setAssignments
+    setAssignments,
+    setEmployees
   };
 
   return <RotaContext.Provider value={value}>{children}</RotaContext.Provider>;
